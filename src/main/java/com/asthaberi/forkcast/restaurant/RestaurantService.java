@@ -2,9 +2,12 @@ package com.asthaberi.forkcast.restaurant;
 
 import java.time.Clock;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import com.asthaberi.forkcast.common.exception.ResourceNotFoundException;
+import com.asthaberi.forkcast.common.geo.GeoHash;
 import com.asthaberi.forkcast.common.geo.GeoUtils;
 import com.asthaberi.forkcast.restaurant.dto.CreateRestaurantRequest;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantResponse;
@@ -16,10 +19,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RestaurantService {
 
-    // Upper bound per search so one request can't pull the whole collection.
-    static final int MAX_RESULTS = 100;
-
     private final RestaurantRepository restaurantRepository;
+    private final NearbyRestaurantFinder nearbyRestaurantFinder;
     private final SearchProperties searchProperties;
     private final Clock clock;
 
@@ -31,13 +32,17 @@ public class RestaurantService {
                                                  String cuisine, boolean openNow) {
         LocalTime now = LocalTime.now(clock);
         double radius = radiusKm != null ? radiusKm : searchProperties.defaultRadiusAt(now);
+        String cell = GeoHash.encode(latitude, longitude, searchProperties.cellPrecision());
 
-        List<RestaurantResponse> restaurants = restaurantRepository
-                .findNearby(latitude, longitude, radius, cuisine, MAX_RESULTS)
+        // The cached result is shared by everyone in the cell; open-now and distance depend on the
+        // current time and the user's exact position, so they're computed here on every request.
+        List<RestaurantResponse> restaurants = nearbyRestaurantFinder
+                .findInCell(cell, radius, normalizeCuisine(cuisine))
                 .stream()
                 .filter(restaurant -> !openNow || restaurant.isOpenAt(now))
                 .map(restaurant -> RestaurantMapper.toResponse(restaurant, now,
                         GeoUtils.distanceKm(latitude, longitude, restaurant.latitude(), restaurant.longitude())))
+                .sorted(Comparator.comparing(RestaurantResponse::distanceKm))
                 .toList();
 
         return new RestaurantSearchResponse(radius, restaurants);
@@ -46,7 +51,7 @@ public class RestaurantService {
     public RestaurantResponse getById(String id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant", id));
-        return RestaurantMapper.toResponse(restaurant, LocalTime.now(clock), null);
+        return RestaurantMapper.toResponse(RestaurantSnapshot.from(restaurant), LocalTime.now(clock), null);
     }
 
     public void requireExists(String id) {
@@ -57,6 +62,11 @@ public class RestaurantService {
 
     public RestaurantResponse create(CreateRestaurantRequest request) {
         Restaurant saved = restaurantRepository.save(RestaurantMapper.toEntity(request));
-        return RestaurantMapper.toResponse(saved, LocalTime.now(clock), null);
+        return RestaurantMapper.toResponse(RestaurantSnapshot.from(saved), LocalTime.now(clock), null);
+    }
+
+    // One spelling per cuisine so "Pizza", " pizza" and "PIZZA" share a cache entry.
+    private static String normalizeCuisine(String cuisine) {
+        return cuisine == null || cuisine.isBlank() ? null : cuisine.trim().toLowerCase(Locale.ROOT);
     }
 }

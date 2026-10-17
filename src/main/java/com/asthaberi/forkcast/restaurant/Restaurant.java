@@ -59,13 +59,6 @@ public class Restaurant {
     }
 
     public boolean isOpenAt(LocalTime time) {
-        if (opensAt == null || closesAt == null) {
-            return false;
-        }
-        if (opensAt.isBefore(closesAt)) {
-            return !time.isBefore(opensAt) && time.isBefore(closesAt);
-        }
-        // Overnight hours, e.g. 18:00 - 03:00
-        return !time.isBefore(opensAt) || time.isBefore(closesAt);
+        return OpeningHours.isOpen(opensAt, closesAt, time);
     }
 }

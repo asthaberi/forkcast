@@ -17,6 +17,13 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      # Fail fast if Redis is down so the request can fall back to MongoDB (see CacheConfig).
+      timeout: 500ms
+      connect-timeout: 500ms
+
+  cache:
+    # "none" disables caching entirely (used for the before/after benchmark).
+    type: ${CACHE_TYPE:redis}
 
 server:
   port: ${PORT:8080}
@@ -35,7 +42,12 @@ forkcast:
   time-zone: Asia/Kolkata
   seed:
     enabled: ${SEED_ENABLED:true}
+  cache:
+    menu-ttl: 30m
+    nearby-ttl: 5m
   search:
+    # Geohash length for grouping nearby users into one cache entry (7 = ~153 m x 153 m cells).
+    cell-precision: 7
     normal-radius-km: 5
     # Smaller radius at peak times keeps delivery times short when demand is high.
     peak-radius-km: 3

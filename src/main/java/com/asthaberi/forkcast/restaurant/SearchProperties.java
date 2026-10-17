@@ -8,9 +8,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Serving radius rules, bound from {@code forkcast.search.*} in application.yml.
  * During peak hours the radius shrinks so deliveries stay fast when riders are busy.
+ *
+ * @param cellPrecision geohash length used to group nearby users for caching (7 = ~153 m cells)
  */
 @ConfigurationProperties(prefix = "forkcast.search")
-public record SearchProperties(double normalRadiusKm, double peakRadiusKm, List<PeakWindow> peakWindows) {
+public record SearchProperties(double normalRadiusKm, double peakRadiusKm, List<PeakWindow> peakWindows,
+                               int cellPrecision) {
 
     public SearchProperties {
         peakWindows = peakWindows == null ? List.of() : List.copyOf(peakWindows);

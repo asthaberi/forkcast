@@ -29,20 +29,20 @@ final class RestaurantMapper {
                 .build();
     }
 
-    static RestaurantResponse toResponse(Restaurant restaurant, LocalTime now, Double distanceKm) {
+    static RestaurantResponse toResponse(RestaurantSnapshot restaurant, LocalTime now, Double distanceKm) {
         return new RestaurantResponse(
-                restaurant.getId(),
-                restaurant.getName(),
-                restaurant.getAddress(),
-                restaurant.getCity(),
+                restaurant.id(),
+                restaurant.name(),
+                restaurant.address(),
+                restaurant.city(),
                 restaurant.latitude(),
                 restaurant.longitude(),
-                restaurant.getCuisines(),
-                restaurant.getRating(),
-                restaurant.getOpensAt(),
-                restaurant.getClosesAt(),
+                restaurant.cuisines(),
+                restaurant.rating(),
+                restaurant.opensAt(),
+                restaurant.closesAt(),
                 restaurant.isOpenAt(now),
                 distanceKm == null ? null : Math.round(distanceKm * 100) / 100.0,
-                restaurant.getImageUrl());
+                restaurant.imageUrl());
     }
 }
