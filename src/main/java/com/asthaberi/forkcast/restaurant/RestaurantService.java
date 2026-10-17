@@ -49,6 +49,12 @@ public class RestaurantService {
         return RestaurantMapper.toResponse(restaurant, LocalTime.now(clock), null);
     }
 
+    public void requireExists(String id) {
+        if (!restaurantRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Restaurant", id);
+        }
+    }
+
     public RestaurantResponse create(CreateRestaurantRequest request) {
         Restaurant saved = restaurantRepository.save(RestaurantMapper.toEntity(request));
         return RestaurantMapper.toResponse(saved, LocalTime.now(clock), null);

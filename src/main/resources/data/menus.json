@@ -1,0 +1,124 @@
+[
+  {
+    "restaurant": "Spice Route Kitchen",
+    "items": [
+      { "name": "Paneer Tikka", "category": "Starters", "price": 249, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["tandoor", "protein"], "description": "Cubes of cottage cheese marinated in yogurt and spices, charred in the tandoor with peppers and onion." },
+      { "name": "Murgh Malai Kebab", "category": "Starters", "price": 299, "vegetarian": false, "spiceLevel": "MILD", "tags": ["tandoor", "creamy"], "description": "Tender chicken marinated in cream, cheese and cardamom, grilled until smoky. Mild and melt-in-the-mouth." },
+      { "name": "Butter Chicken", "category": "Mains", "price": 349, "vegetarian": false, "spiceLevel": "MILD", "tags": ["bestseller", "creamy"], "description": "Tandoori chicken simmered in a rich, buttery tomato gravy with fenugreek. Pairs best with naan." },
+      { "name": "Dal Makhani", "category": "Mains", "price": 229, "vegetarian": true, "spiceLevel": "MILD", "tags": ["comfort food", "slow cooked"], "description": "Black lentils and kidney beans slow-cooked overnight with butter and cream." },
+      { "name": "Mutton Rogan Josh", "category": "Mains", "price": 429, "vegetarian": false, "spiceLevel": "HOT", "tags": ["kashmiri", "spicy"], "description": "Slow-braised mutton in a deep red Kashmiri chilli and fennel gravy. Bold and spicy." },
+      { "name": "Garlic Naan", "category": "Breads", "price": 69, "vegetarian": true, "spiceLevel": "NONE", "tags": ["tandoor"], "description": "Soft leavened bread from the tandoor, brushed with garlic butter and coriander." }
+    ]
+  },
+  {
+    "restaurant": "Dosa Junction",
+    "items": [
+      { "name": "Masala Dosa", "category": "Dosas", "price": 129, "vegetarian": true, "spiceLevel": "MILD", "tags": ["bestseller", "breakfast"], "description": "Crispy fermented rice and lentil crepe filled with spiced potato, served with sambar and coconut chutney." },
+      { "name": "Mysore Masala Dosa", "category": "Dosas", "price": 149, "vegetarian": true, "spiceLevel": "HOT", "tags": ["spicy", "breakfast"], "description": "Dosa smeared with fiery red chilli-garlic chutney and stuffed with potato masala." },
+      { "name": "Idli Sambar", "category": "Breakfast", "price": 89, "vegetarian": true, "spiceLevel": "MILD", "tags": ["light", "healthy", "breakfast"], "description": "Three steamed rice cakes, soft and light, served with lentil sambar and chutneys. Easy on the stomach." },
+      { "name": "Medu Vada", "category": "Breakfast", "price": 99, "vegetarian": true, "spiceLevel": "MILD", "tags": ["fried", "breakfast"], "description": "Crisp golden lentil doughnuts with a fluffy centre, served with sambar." },
+      { "name": "Filter Coffee", "category": "Beverages", "price": 49, "vegetarian": true, "spiceLevel": "NONE", "tags": ["coffee", "hot drink"], "description": "Strong South Indian decoction coffee with frothy hot milk, served in a steel tumbler." }
+    ]
+  },
+  {
+    "restaurant": "Chaat Corner",
+    "items": [
+      { "name": "Pani Puri", "category": "Chaat", "price": 59, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["street food", "tangy"], "description": "Six crisp hollow puris filled with potato and chickpeas, dunked in tangy mint and tamarind water." },
+      { "name": "Aloo Tikki Chaat", "category": "Chaat", "price": 79, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["street food", "tangy"], "description": "Crisp potato patties topped with yogurt, tamarind and green chutney, sev and pomegranate." },
+      { "name": "Raj Kachori", "category": "Chaat", "price": 99, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["street food"], "description": "A giant crisp kachori loaded with sprouts, potato, yogurt and sweet and spicy chutneys." },
+      { "name": "Chole Bhature", "category": "Mains", "price": 129, "vegetarian": true, "spiceLevel": "HOT", "tags": ["heavy", "punjabi"], "description": "Spicy Punjabi chickpea curry with two fluffy deep-fried breads and pickled onions." },
+      { "name": "Kesar Lassi", "category": "Beverages", "price": 69, "vegetarian": true, "spiceLevel": "NONE", "tags": ["cold drink", "sweet"], "description": "Thick chilled sweet yogurt drink with saffron and cardamom." }
+    ]
+  },
+  {
+    "restaurant": "Dragon Wok",
+    "items": [
+      { "name": "Veg Manchurian", "category": "Starters", "price": 189, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["indo-chinese"], "description": "Fried vegetable dumplings tossed in a garlicky soy and chilli sauce." },
+      { "name": "Chilli Chicken", "category": "Starters", "price": 249, "vegetarian": false, "spiceLevel": "HOT", "tags": ["indo-chinese", "spicy"], "description": "Crispy chicken wok-tossed with green chillies, capsicum and dark soy. Fiery and addictive." },
+      { "name": "Hakka Noodles", "category": "Noodles & Rice", "price": 179, "vegetarian": true, "spiceLevel": "MILD", "tags": ["noodles"], "description": "Stir-fried noodles with shredded cabbage, carrots and spring onion." },
+      { "name": "Thai Green Curry with Jasmine Rice", "category": "Mains", "price": 299, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["thai", "coconut"], "description": "Fragrant coconut curry with Thai basil, lemongrass and vegetables, served with jasmine rice." },
+      { "name": "Prawn Fried Rice", "category": "Noodles & Rice", "price": 279, "vegetarian": false, "spiceLevel": "MILD", "tags": ["seafood", "rice"], "description": "Wok-fried rice with prawns, egg and spring onion." }
+    ]
+  },
+  {
+    "restaurant": "Pizza Piazza",
+    "items": [
+      { "name": "Margherita Pizza", "category": "Pizzas", "price": 249, "vegetarian": true, "spiceLevel": "NONE", "tags": ["classic", "cheese"], "description": "Thin crust pizza with San Marzano tomato sauce, fresh mozzarella and basil." },
+      { "name": "Pepperoni Pizza", "category": "Pizzas", "price": 349, "vegetarian": false, "spiceLevel": "MILD", "tags": ["cheese", "bestseller"], "description": "Tomato sauce, mozzarella and a generous layer of spicy chicken pepperoni." },
+      { "name": "Farmhouse Pizza", "category": "Pizzas", "price": 299, "vegetarian": true, "spiceLevel": "NONE", "tags": ["veggie", "cheese"], "description": "Loaded with mushrooms, bell peppers, onions, sweet corn and olives." },
+      { "name": "Penne Arrabbiata", "category": "Pasta", "price": 269, "vegetarian": true, "spiceLevel": "HOT", "tags": ["pasta", "spicy"], "description": "Penne in a fiery tomato sauce with garlic and red chilli flakes." },
+      { "name": "Tiramisu", "category": "Desserts", "price": 199, "vegetarian": true, "spiceLevel": "NONE", "tags": ["coffee", "sweet"], "description": "Layers of espresso-soaked sponge and mascarpone cream dusted with cocoa." }
+    ]
+  },
+  {
+    "restaurant": "Midnight Biryani Co.",
+    "items": [
+      { "name": "Hyderabadi Chicken Dum Biryani", "category": "Biryani", "price": 299, "vegetarian": false, "spiceLevel": "HOT", "tags": ["bestseller", "dum", "late night"], "description": "Basmati rice and marinated chicken slow-cooked sealed in a pot with saffron, mint and fried onions." },
+      { "name": "Mutton Biryani", "category": "Biryani", "price": 379, "vegetarian": false, "spiceLevel": "HOT", "tags": ["dum", "late night"], "description": "Tender mutton layered with fragrant long-grain rice and whole spices, cooked dum style." },
+      { "name": "Veg Dum Biryani", "category": "Biryani", "price": 229, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["dum"], "description": "Seasonal vegetables and paneer layered with saffron basmati rice and caramelised onions." },
+      { "name": "Chicken 65", "category": "Starters", "price": 219, "vegetarian": false, "spiceLevel": "HOT", "tags": ["fried", "spicy"], "description": "Deep-fried chicken bites tossed with curry leaves, green chilli and red chilli. Crunchy and spicy." },
+      { "name": "Mirchi Ka Salan", "category": "Sides", "price": 99, "vegetarian": true, "spiceLevel": "HOT", "tags": ["hyderabadi"], "description": "Green chillies in a tangy peanut, sesame and tamarind gravy. The classic biryani side." },
+      { "name": "Double Ka Meetha", "category": "Desserts", "price": 119, "vegetarian": true, "spiceLevel": "NONE", "tags": ["sweet", "hyderabadi"], "description": "Hyderabadi bread pudding soaked in saffron milk, topped with nuts." }
+    ]
+  },
+  {
+    "restaurant": "Green Bowl Cafe",
+    "items": [
+      { "name": "Quinoa Buddha Bowl", "category": "Bowls", "price": 279, "vegetarian": true, "spiceLevel": "NONE", "tags": ["vegan", "healthy", "high protein", "gluten free"], "description": "Quinoa, roasted chickpeas, avocado, beetroot and greens with a lemon tahini dressing." },
+      { "name": "Grilled Chicken Salad", "category": "Salads", "price": 299, "vegetarian": false, "spiceLevel": "NONE", "tags": ["healthy", "high protein", "low carb"], "description": "Herb-grilled chicken breast over mixed greens, cherry tomatoes and cucumber with a light vinaigrette." },
+      { "name": "Tofu Stir Fry Bowl", "category": "Bowls", "price": 259, "vegetarian": true, "spiceLevel": "MILD", "tags": ["vegan", "healthy", "high protein"], "description": "Crispy tofu with broccoli, bell peppers and brown rice in a ginger sesame sauce." },
+      { "name": "Avocado Toast", "category": "Breakfast", "price": 229, "vegetarian": true, "spiceLevel": "NONE", "tags": ["vegan", "breakfast"], "description": "Sourdough toast topped with smashed avocado, cherry tomatoes and chilli flakes." },
+      { "name": "Berry Smoothie Bowl", "category": "Bowls", "price": 219, "vegetarian": true, "spiceLevel": "NONE", "tags": ["vegan", "healthy", "breakfast", "sweet"], "description": "Blended mixed berries and banana topped with granola, chia seeds and fresh fruit." }
+    ]
+  },
+  {
+    "restaurant": "Royal Thali",
+    "items": [
+      { "name": "Rajasthani Thali", "category": "Thalis", "price": 399, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["thali", "bestseller", "unlimited"], "description": "Unlimited thali with dal baati churma, gatte ki sabzi, ker sangri, kadhi, rice, rotis and dessert." },
+      { "name": "Mini Thali", "category": "Thalis", "price": 249, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["thali"], "description": "Smaller fixed thali with dal, two sabzis, rice, three rotis and a sweet." },
+      { "name": "Dal Baati Churma", "category": "Specials", "price": 229, "vegetarian": true, "spiceLevel": "MILD", "tags": ["rajasthani", "ghee"], "description": "Baked wheat dumplings dipped in ghee with five-lentil dal and sweet crumbled churma." },
+      { "name": "Laal Maas", "category": "Specials", "price": 399, "vegetarian": false, "spiceLevel": "HOT", "tags": ["rajasthani", "spicy"], "description": "Fiery Rajasthani mutton curry cooked with Mathania red chillies and yogurt." },
+      { "name": "Masala Chaas", "category": "Beverages", "price": 49, "vegetarian": true, "spiceLevel": "MILD", "tags": ["cold drink", "digestive"], "description": "Spiced buttermilk with roasted cumin, mint and ginger." }
+    ]
+  },
+  {
+    "restaurant": "Burger Barn",
+    "items": [
+      { "name": "Classic Chicken Burger", "category": "Burgers", "price": 199, "vegetarian": false, "spiceLevel": "MILD", "tags": ["bestseller"], "description": "Crispy fried chicken fillet with lettuce, pickles and mayo in a toasted brioche bun." },
+      { "name": "Smoky BBQ Double Burger", "category": "Burgers", "price": 299, "vegetarian": false, "spiceLevel": "MILD", "tags": ["heavy", "cheese"], "description": "Two grilled chicken patties with cheddar, caramelised onions and smoky barbecue sauce." },
+      { "name": "Crispy Veg Burger", "category": "Burgers", "price": 149, "vegetarian": true, "spiceLevel": "MILD", "tags": ["veggie"], "description": "Spiced potato and pea patty with lettuce, tomato and tangy sauce." },
+      { "name": "Peri Peri Fries", "category": "Sides", "price": 119, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["fried", "snack"], "description": "Crisp golden fries tossed in a hot and tangy peri peri seasoning." },
+      { "name": "Chocolate Shake", "category": "Beverages", "price": 149, "vegetarian": true, "spiceLevel": "NONE", "tags": ["cold drink", "sweet"], "description": "Thick milkshake blended with chocolate ice cream and topped with whipped cream." }
+    ]
+  },
+  {
+    "restaurant": "Sweet Tooth Mithai",
+    "items": [
+      { "name": "Gulab Jamun", "category": "Sweets", "price": 89, "vegetarian": true, "spiceLevel": "NONE", "tags": ["sweet", "warm"], "description": "Two soft milk-solid dumplings soaked in warm rose and cardamom sugar syrup." },
+      { "name": "Rasmalai", "category": "Sweets", "price": 119, "vegetarian": true, "spiceLevel": "NONE", "tags": ["sweet", "chilled"], "description": "Spongy cottage cheese discs in chilled saffron milk with pistachios." },
+      { "name": "Gajar Ka Halwa", "category": "Sweets", "price": 129, "vegetarian": true, "spiceLevel": "NONE", "tags": ["sweet", "warm", "winter"], "description": "Slow-cooked grated carrots with milk, ghee and nuts. A winter favourite." },
+      { "name": "Kaju Katli (250 g)", "category": "Boxes", "price": 349, "vegetarian": true, "spiceLevel": "NONE", "tags": ["sweet", "gifting"], "description": "Diamond-shaped cashew fudge finished with silver leaf. Box of 250 grams." },
+      { "name": "Samosa", "category": "Snacks", "price": 39, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["fried", "snack"], "description": "Crisp pastry filled with spiced potato and peas, served with tamarind chutney." }
+    ]
+  },
+  {
+    "restaurant": "Coastal Curry",
+    "items": [
+      { "name": "Goan Fish Curry", "category": "Mains", "price": 349, "vegetarian": false, "spiceLevel": "HOT", "tags": ["seafood", "coconut", "tangy"], "description": "Kingfish in a tangy coconut and kokum curry with red chillies. Best with steamed rice." },
+      { "name": "Prawn Gassi", "category": "Mains", "price": 399, "vegetarian": false, "spiceLevel": "MEDIUM", "tags": ["seafood", "coconut", "mangalorean"], "description": "Mangalorean prawn curry in a roasted coconut and tamarind gravy." },
+      { "name": "Kerala Vegetable Stew", "category": "Mains", "price": 229, "vegetarian": true, "spiceLevel": "MILD", "tags": ["coconut", "light"], "description": "Mild coconut milk stew with vegetables, ginger and curry leaves. Gentle and comforting." },
+      { "name": "Appam (2 pcs)", "category": "Breads", "price": 79, "vegetarian": true, "spiceLevel": "NONE", "tags": ["kerala"], "description": "Lacy fermented rice pancakes with soft spongy centres. Perfect with stew." },
+      { "name": "Fish Fry", "category": "Starters", "price": 299, "vegetarian": false, "spiceLevel": "HOT", "tags": ["seafood", "fried", "spicy"], "description": "Pomfret marinated in a spicy red masala and shallow fried until crisp." }
+    ]
+  },
+  {
+    "restaurant": "Tandoor Tales",
+    "items": [
+      { "name": "Tandoori Chicken (Half)", "category": "Tandoor", "price": 299, "vegetarian": false, "spiceLevel": "MEDIUM", "tags": ["tandoor", "high protein", "bestseller"], "description": "Half chicken marinated in yogurt and Kashmiri chilli, roasted in a clay oven." },
+      { "name": "Seekh Kebab", "category": "Tandoor", "price": 279, "vegetarian": false, "spiceLevel": "MEDIUM", "tags": ["tandoor"], "description": "Minced mutton skewers with ginger, garlic and green chilli, grilled over charcoal." },
+      { "name": "Tandoori Soya Chaap", "category": "Tandoor", "price": 219, "vegetarian": true, "spiceLevel": "MEDIUM", "tags": ["tandoor", "high protein"], "description": "Soya chaap sticks in a spiced yogurt marinade, charred in the tandoor." },
+      { "name": "Kadai Paneer", "category": "Mains", "price": 259, "vegetarian": true, "spiceLevel": "HOT", "tags": ["spicy"], "description": "Paneer and bell peppers cooked with freshly ground kadai masala in a thick tomato gravy." },
+      { "name": "Butter Roti", "category": "Breads", "price": 29, "vegetarian": true, "spiceLevel": "NONE", "tags": ["tandoor"], "description": "Whole wheat flatbread from the tandoor, brushed with butter." }
+    ]
+  }
+]

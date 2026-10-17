@@ -20,9 +20,10 @@ public class MongoConfig {
      */
     @Bean
     MongoCustomConversions mongoCustomConversions() {
-        return new MongoCustomConversions(List.of(
-                new LocalTimeToStringConverter(),
-                new StringToLocalTimeConverter()));
+        return MongoCustomConversions.create(adapter -> adapter
+                .registerConverters(List.of(new LocalTimeToStringConverter(), new StringToLocalTimeConverter()))
+                // Store BigDecimal (prices) as MongoDB's exact Decimal128 type rather than a string.
+                .bigDecimal(MongoCustomConversions.BigDecimalRepresentation.DECIMAL128));
     }
 
     @WritingConverter
