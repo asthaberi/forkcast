@@ -1,0 +1,25 @@
+{
+  "label": "redis",
+  "sessions": 1500,
+  "requests": 2350,
+  "errors": 0,
+  "elapsed_s": 1.69,
+  "throughput_rps": 1389.9,
+  "mongo_commands": 870,
+  "mongo_commands_per_request": 0.37,
+  "cache_hit_ratio": 0.636,
+  "latency_ms": {
+    "search": {
+      "count": 1500,
+      "p50": 12.14,
+      "p95": 25.47,
+      "p99": 63.69
+    },
+    "menu": {
+      "count": 850,
+      "p50": 9.17,
+      "p95": 16.2,
+      "p99": 165.64
+    }
+  }
+}

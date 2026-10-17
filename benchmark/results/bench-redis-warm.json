@@ -1,0 +1,25 @@
+{
+  "label": "redis-warm",
+  "sessions": 1500,
+  "requests": 2350,
+  "errors": 0,
+  "elapsed_s": 1.61,
+  "throughput_rps": 1463.7,
+  "mongo_commands": 0,
+  "mongo_commands_per_request": 0.0,
+  "cache_hit_ratio": 1.0,
+  "latency_ms": {
+    "search": {
+      "count": 1500,
+      "p50": 10.27,
+      "p95": 15.65,
+      "p99": 357.68
+    },
+    "menu": {
+      "count": 850,
+      "p50": 9.51,
+      "p95": 13.87,
+      "p99": 21.24
+    }
+  }
+}

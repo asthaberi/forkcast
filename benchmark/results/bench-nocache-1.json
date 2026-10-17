@@ -1,0 +1,25 @@
+{
+  "label": "no-cache",
+  "sessions": 1500,
+  "requests": 2350,
+  "errors": 0,
+  "elapsed_s": 1.67,
+  "throughput_rps": 1409.8,
+  "mongo_commands": 3200,
+  "mongo_commands_per_request": 1.362,
+  "cache_hit_ratio": null,
+  "latency_ms": {
+    "search": {
+      "count": 1500,
+      "p50": 11.91,
+      "p95": 19.23,
+      "p99": 33.77
+    },
+    "menu": {
+      "count": 850,
+      "p50": 14.21,
+      "p95": 21.88,
+      "p99": 37.51
+    }
+  }
+}
