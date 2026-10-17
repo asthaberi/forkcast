@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Spice Route Kitchen",
+    "address": "City Centre, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2150,
+    "longitude": 78.1800,
+    "cuisines": ["North Indian", "Mughlai"],
+    "opensAt": "11:00",
+    "closesAt": "23:00",
+    "rating": 4.4
+  },
+  {
+    "name": "Dosa Junction",
+    "address": "Patel Nagar, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2080,
+    "longitude": 78.1850,
+    "cuisines": ["South Indian"],
+    "opensAt": "07:00",
+    "closesAt": "22:00",
+    "rating": 4.2
+  },
+  {
+    "name": "Chaat Corner",
+    "address": "Maharaj Bada, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2200,
+    "longitude": 78.1700,
+    "cuisines": ["Street Food", "Chaat"],
+    "opensAt": "16:00",
+    "closesAt": "22:30",
+    "rating": 4.6
+  },
+  {
+    "name": "Dragon Wok",
+    "address": "Thatipur, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2300,
+    "longitude": 78.1900,
+    "cuisines": ["Chinese", "Thai"],
+    "opensAt": "12:00",
+    "closesAt": "23:30",
+    "rating": 3.9
+  },
+  {
+    "name": "Pizza Piazza",
+    "address": "Lashkar, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.1950,
+    "longitude": 78.1650,
+    "cuisines": ["Italian", "Pizza"],
+    "opensAt": "11:00",
+    "closesAt": "23:00",
+    "rating": 4.1
+  },
+  {
+    "name": "Midnight Biryani Co.",
+    "address": "Morar, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2250,
+    "longitude": 78.2050,
+    "cuisines": ["Biryani", "Mughlai"],
+    "opensAt": "18:00",
+    "closesAt": "03:00",
+    "rating": 4.5
+  },
+  {
+    "name": "Green Bowl Cafe",
+    "address": "Sachin Tendulkar Marg, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2000,
+    "longitude": 78.2000,
+    "cuisines": ["Healthy", "Salads", "Vegan"],
+    "opensAt": "08:00",
+    "closesAt": "20:00",
+    "rating": 4.3
+  },
+  {
+    "name": "Royal Thali",
+    "address": "Jayendraganj, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2400,
+    "longitude": 78.1600,
+    "cuisines": ["Rajasthani", "Thali"],
+    "opensAt": "11:30",
+    "closesAt": "15:30",
+    "rating": 4.7
+  },
+  {
+    "name": "Burger Barn",
+    "address": "DD Nagar, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.1850,
+    "longitude": 78.2100,
+    "cuisines": ["American", "Burgers"],
+    "opensAt": "11:00",
+    "closesAt": "23:00",
+    "rating": 3.8
+  },
+  {
+    "name": "Sweet Tooth Mithai",
+    "address": "Morar Cantt, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2500,
+    "longitude": 78.2200,
+    "cuisines": ["Desserts", "Sweets"],
+    "opensAt": "09:00",
+    "closesAt": "22:00",
+    "rating": 4.4
+  },
+  {
+    "name": "Coastal Curry",
+    "address": "Gola Ka Mandir, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.1700,
+    "longitude": 78.1500,
+    "cuisines": ["Seafood", "South Indian"],
+    "opensAt": "12:00",
+    "closesAt": "22:00",
+    "rating": 4.0
+  },
+  {
+    "name": "Tandoor Tales",
+    "address": "Airport Road, Gwalior",
+    "city": "Gwalior",
+    "latitude": 26.2700,
+    "longitude": 78.2300,
+    "cuisines": ["North Indian", "Tandoor"],
+    "opensAt": "12:00",
+    "closesAt": "23:00",
+    "rating": 4.2
+  }
+]
