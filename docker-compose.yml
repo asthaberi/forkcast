@@ -1,0 +1,24 @@
+# Local infrastructure for Forkcast.
+# Start: docker compose up -d    Stop: docker compose down
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: forkcast-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # Redis 8 ships with the Redis Query Engine (vector search built in),
+  # which we'll reuse later for semantic dish search.
+  redis:
+    image: redis:8.2
+    container_name: forkcast-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mongo-data:
+  redis-data:
