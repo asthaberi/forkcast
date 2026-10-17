@@ -29,3 +29,17 @@ management:
   endpoint:
     health:
       show-details: always
+
+forkcast:
+  # Business time zone for open/peak hours, independent of the server's zone.
+  time-zone: Asia/Kolkata
+  seed:
+    enabled: ${SEED_ENABLED:true}
+  search:
+    normal-radius-km: 5
+    # Smaller radius at peak times keeps delivery times short when demand is high.
+    peak-radius-km: 3
+    peak-windows:
+      - { start-hour: 8, end-hour: 10 }
+      - { start-hour: 13, end-hour: 14 }
+      - { start-hour: 19, end-hour: 21 }
