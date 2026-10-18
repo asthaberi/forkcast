@@ -10,7 +10,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Framework | Spring Boot 4.1 (Web MVC, Validation, Actuator) |
 | Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
-| Cache / vector store | Redis 8 (Spring Cache) |
+| Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub) |
 | AI | Spring AI + Google Gemini *(planned)* |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | Build | Maven (wrapper included) |
@@ -23,7 +23,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 4:** Cart with single-restaurant rule, live pricing and optimistic locking ([docs/cart.md](docs/cart.md))
 - [x] **Step 5:** Orders: transactional, idempotent checkout ([docs/orders.md](docs/orders.md))
 - [x] **Step 6:** JWT authentication, roles and restaurant ownership ([docs/security.md](docs/security.md))
-- [ ] **Phase 2, production-grade (rest):** order state machine, live order tracking (SSE), rate limiting, OpenAPI docs, CI
+- [x] **Step 7:** Order state machine and live tracking over SSE, scaled out with Redis pub/sub ([docs/order-tracking.md](docs/order-tracking.md))
+- [ ] **Phase 2, production-grade (rest):** rate limiting, OpenAPI docs, CI
 - [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
 
 ## Running locally
@@ -121,6 +122,21 @@ Need a customer token. Placing an order also needs an `Idempotency-Key` header
 | `GET` | `/api/v1/orders?page=0&size=10` | Order history, newest first |
 | `GET` | `/api/v1/orders/{id}` | Order details with status history |
 | `POST` | `/api/v1/orders/{id}/cancel` | Cancel while still `PLACED` |
+| `GET` | `/api/v1/orders/{id}/events` | **Live tracking** (Server-Sent Events): current status, then every change |
+
+### Restaurant orders
+
+For the restaurant's owner (or an admin):
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/restaurants/{id}/orders?status=PLACED` | Order queue, newest first, optional status filter |
+| `POST` | `/api/v1/restaurants/{id}/orders/{orderId}/status` | `{"status": ...}`: ACCEPTED/REJECTED → PREPARING → OUT_FOR_DELIVERY → DELIVERED |
+| `GET` | `/api/v1/restaurants/{id}/orders/events` | Live feed of new orders and status changes (SSE) |
+
+```bash
+curl -N -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/orders/<orderId>/events
+```
 
 ### Errors
 
@@ -132,7 +148,7 @@ Errors use the RFC 9457 Problem Details format:
 ```
 
 Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MISMATCH`, `ITEM_UNAVAILABLE`,
-`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`.
+`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`, `INVALID_STATUS_TRANSITION`.
 
 ## Design notes
 
@@ -149,6 +165,9 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   `Idempotency-Key` header with a unique index, and retries only genuine conflicts (incl. MongoDB's
   `TransientTransactionError` label). Verified with Testcontainers: 10 simultaneous taps → exactly one order
   ([details](docs/orders.md)).
+- **Order lifecycle:** an explicit state machine (one table of allowed moves and who may make them); live
+  tracking over SSE, with events published to Redis pub/sub after commit so any instance can serve any stream.
+  Streams close before graceful shutdown, so deploys don't stall ([details](docs/order-tracking.md)).
 - **Security:** stateless JWTs validated by Spring Security's resource server; roles in URL rules plus
   an object-level ownership check (`@PreAuthorize`) so owners edit only their own menus; login gives the
   same answer and timing for unknown emails and wrong passwords ([details](docs/security.md)).

@@ -92,5 +92,5 @@ Stable across repeated runs; a single run retried 13 real write conflicts. Over 
 - `POST /api/v1/orders/{id}/cancel`: allowed only while `PLACED` (`409 ORDER_NOT_CANCELLABLE` afterwards).
   Every status change is appended to `statusHistory`; `@Version` guards against concurrent status changes.
 
-The restaurant-side lifecycle (accept → preparing → out for delivery → delivered) and live tracking come
-with the order state machine in phase 2.
+The restaurant-side lifecycle (accept → preparing → out for delivery → delivered) and live tracking are
+covered in [order-tracking.md](order-tracking.md).
