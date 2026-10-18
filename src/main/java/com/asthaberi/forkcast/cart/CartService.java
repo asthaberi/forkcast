@@ -64,6 +64,21 @@ public class CartService {
         update(userId, Cart::clear);
     }
 
+    public CheckoutCart loadForCheckout(String userId) {
+        Cart cart = loadOrCreate(userId);
+        return new CheckoutCart(cart, cartPricer.price(cart));
+    }
+
+    /**
+     * Empties the cart after an order is placed. No retry here: if the cart changed since checkout read it,
+     * the version check fails and the caller's transaction rolls back, so the order isn't created from a stale cart.
+     */
+    public void clearAfterCheckout(Cart cart) {
+        cart.clear();
+        cart.touch(clock.instant());
+        cartRepository.save(cart);
+    }
+
     /**
      * Read-modify-write with optimistic locking. If another request saved the cart after we read it
      * (version mismatch) or created it first (unique userId), re-read the latest cart and apply the
