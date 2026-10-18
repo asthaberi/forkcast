@@ -13,7 +13,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
 | AI | Spring AI + Google Gemini *(planned)* |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
-| Build | Maven (wrapper included) |
+| API docs | springdoc-openapi (OpenAPI 3.1, Swagger UI) |
+| Build & delivery | Maven wrapper, multi-stage Docker image, GitHub Actions → GitHub Container Registry |
 
 ## Roadmap
 
@@ -25,7 +26,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 6:** JWT authentication, roles and restaurant ownership ([docs/security.md](docs/security.md))
 - [x] **Step 7:** Order state machine and live tracking over SSE, scaled out with Redis pub/sub ([docs/order-tracking.md](docs/order-tracking.md))
 - [x] **Step 8:** Distributed rate limiting: Redis token buckets in an atomic Lua script ([docs/rate-limiting.md](docs/rate-limiting.md))
-- [ ] **Phase 2, production-grade (rest):** OpenAPI docs, CI
+- [x] **Step 9:** OpenAPI/Swagger docs, Docker image, GitHub Actions CI ([docs/delivery.md](docs/delivery.md))
 - [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
 
 ## Running locally
@@ -38,7 +39,16 @@ docker compose up -d      # start MongoDB (single-node replica set) + Redis
 ./mvnw spring-boot:run    # start the API on http://localhost:8080
 ```
 
-Health check: <http://localhost:8080/actuator/health>
+Or run everything, including the app, in Docker:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+**API docs:** <http://localhost:8080/swagger-ui.html>. Log in with a demo account, click **Authorize** and
+paste the token.
+
+Health check: <http://localhost:8080/actuator/health> (plus `/liveness` and `/readiness`)
 Metrics such as cache hit/miss counts: `/actuator/metrics/cache.gets` *(admin token)*
 
 On first start, 12 sample restaurants around Gwalior, 62 menu items and three demo accounts (admin, the owner of
@@ -170,6 +180,9 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
 - **Order lifecycle:** an explicit state machine (one table of allowed moves and who may make them); live
   tracking over SSE, with events published to Redis pub/sub after commit so any instance can serve any stream.
   Streams close before graceful shutdown, so deploys don't stall ([details](docs/order-tracking.md)).
+- **Delivery:** layered, non-root Docker image (code changes ship as a <1 MB layer), Compose for the full
+  stack, and CI that runs all tests, including Testcontainers, before building and publishing the image
+  ([details](docs/delivery.md)).
 - **Rate limiting:** token buckets in Redis, checked by one atomic Lua script so limits hold across instances
   (100 concurrent requests through two connections → exactly the 20 allowed). Per-IP and per-account login limits,
   per-user API and checkout limits, `429` + `Retry-After`; fails open with a circuit breaker if Redis is down
