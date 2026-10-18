@@ -116,12 +116,27 @@ class RedisRateLimiterIntegrationTest {
     }
 
     @Test
-    void failsOpenWhenRedisIsUnreachable() {
-        RateLimiter limiter = limiter(1); // nothing listens on port 1
+    void failsOpenWhenRedisIsUnreachableThenStopsTryingForAWhile() {
+        long[] now = {0};
+        // nothing listens on port 1
+        RedisRateLimiter limiter = new RedisRateLimiter(template(1), PROPERTIES, meters, () -> now[0]);
 
         assertThat(limiter.tryConsume("burst", uniqueKey()).allowed()).isTrue();
-        assertThat(meters.counter("forkcast.rate_limit.decisions", "policy", "burst", "outcome", "error").count())
-                .isEqualTo(1);
+        // Within the skip window: allowed at once, without waiting for another Redis timeout
+        now[0] += Duration.ofSeconds(4).toNanos();
+        long start = System.nanoTime();
+        assertThat(limiter.tryConsume("burst", uniqueKey()).allowed()).isTrue();
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofMillis(50));
+        // After the window it tries Redis again
+        now[0] += Duration.ofSeconds(2).toNanos();
+        assertThat(limiter.tryConsume("burst", uniqueKey()).allowed()).isTrue();
+
+        assertThat(outcomes("error")).isEqualTo(2);
+        assertThat(outcomes("skipped")).isEqualTo(1);
+    }
+
+    private double outcomes(String outcome) {
+        return meters.counter("forkcast.rate_limit.decisions", "policy", "burst", "outcome", outcome).count();
     }
 
     private RateLimiter limiter(int port) {

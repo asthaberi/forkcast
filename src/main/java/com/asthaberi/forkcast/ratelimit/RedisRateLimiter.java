@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.function.LongSupplier;
 
 import com.asthaberi.forkcast.ratelimit.RateLimitProperties.Policy;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -19,11 +20,15 @@ import org.springframework.data.redis.core.script.RedisScript;
  *
  * Fails open: if Redis is unreachable the request is allowed and the error is counted and logged.
  * Limits protect against abuse, but they shouldn't take the whole API down with them.
+ *
+ * Circuit breaker: after a failure, Redis is skipped for a few seconds. Otherwise, during an outage every
+ * request would wait out the Redis timeout before being allowed anyway.
  */
 @Slf4j
 public class RedisRateLimiter implements RateLimiter {
 
     private static final String KEY_PREFIX = "forkcast:rate-limit:";
+    static final Duration SKIP_AFTER_FAILURE = Duration.ofSeconds(5);
 
     @SuppressWarnings("rawtypes")
     private static final RedisScript<List> TOKEN_BUCKET =
@@ -32,17 +37,32 @@ public class RedisRateLimiter implements RateLimiter {
     private final StringRedisTemplate redisTemplate;
     private final RateLimitProperties properties;
     private final MeterRegistry meterRegistry;
+    private final LongSupplier nanoClock;
+    // nanoTime values can only be compared by subtraction, so this starts at "now" (already expired),
+    // never at a sentinel like Long.MIN_VALUE, where the subtraction would overflow
+    private volatile long skipRedisUntil;
 
     public RedisRateLimiter(StringRedisTemplate redisTemplate, RateLimitProperties properties,
                             MeterRegistry meterRegistry) {
+        this(redisTemplate, properties, meterRegistry, System::nanoTime);
+    }
+
+    RedisRateLimiter(StringRedisTemplate redisTemplate, RateLimitProperties properties, MeterRegistry meterRegistry,
+                     LongSupplier nanoClock) {
         this.redisTemplate = redisTemplate;
         this.properties = properties;
         this.meterRegistry = meterRegistry;
+        this.nanoClock = nanoClock;
+        this.skipRedisUntil = nanoClock.getAsLong();
     }
 
     @Override
     public RateLimitDecision tryConsume(String policyName, String key) {
         Policy policy = properties.policy(policyName);
+        if (nanoClock.getAsLong() - skipRedisUntil < 0) {
+            count(policyName, "skipped");
+            return RateLimitDecision.unlimited();
+        }
         try {
             List<?> result = redisTemplate.execute(TOKEN_BUCKET, List.of(redisKey(policyName, key)),
                     String.valueOf(policy.capacity()), String.valueOf(policy.refillTokens()),
@@ -54,7 +74,9 @@ public class RedisRateLimiter implements RateLimiter {
             return decision;
         } catch (RuntimeException e) {
             count(policyName, "error");
-            log.warn("Rate limit check '{}' failed, allowing request: {}", policyName, e.toString());
+            skipRedisUntil = nanoClock.getAsLong() + SKIP_AFTER_FAILURE.toNanos();
+            log.warn("Rate limit check '{}' failed; allowing requests without limits for {} s: {}",
+                    policyName, SKIP_AFTER_FAILURE.toSeconds(), e.toString());
             return RateLimitDecision.unlimited();
         }
     }
