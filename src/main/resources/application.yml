@@ -45,6 +45,11 @@ forkcast:
   cache:
     menu-ttl: 30m
     nearby-ttl: 5m
+  pricing:
+    delivery-fee: 30.00
+    free-delivery-threshold: 499.00
+    # GST on restaurant food in India
+    tax-rate: 0.05
   search:
     # Geohash length for grouping nearby users into one cache entry (7 = ~153 m x 153 m cells).
     cell-precision: 7
