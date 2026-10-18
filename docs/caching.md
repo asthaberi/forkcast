@@ -57,6 +57,9 @@ container during a run: both endpoints kept answering `200` (~0.5 s each, the ti
 60% of sessions also open a menu. User locations are clustered: 70% within ~100 m of one of 40
 neighbourhood hotspots, 30% anywhere within 3 km of the city centre. 20 concurrent clients.
 
+Rate limiting was added later (step 8); rerun these with `RATE_LIMIT_ENABLED=false`, or the API-wide limit
+will answer most of the single-IP traffic with `429`.
+
 - **No cache:** app started with `CACHE_TYPE=none`.
 - **Redis, cold:** cache flushed before the run, so it starts empty. This is the conservative number.
 - **Redis, warm:** the same workload replayed with the cache already full. This is the steady state.

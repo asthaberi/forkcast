@@ -10,7 +10,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Framework | Spring Boot 4.1 (Web MVC, Validation, Actuator) |
 | Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
-| Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub) |
+| Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
 | AI | Spring AI + Google Gemini *(planned)* |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | Build | Maven (wrapper included) |
@@ -24,7 +24,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 5:** Orders: transactional, idempotent checkout ([docs/orders.md](docs/orders.md))
 - [x] **Step 6:** JWT authentication, roles and restaurant ownership ([docs/security.md](docs/security.md))
 - [x] **Step 7:** Order state machine and live tracking over SSE, scaled out with Redis pub/sub ([docs/order-tracking.md](docs/order-tracking.md))
-- [ ] **Phase 2, production-grade (rest):** rate limiting, OpenAPI docs, CI
+- [x] **Step 8:** Distributed rate limiting: Redis token buckets in an atomic Lua script ([docs/rate-limiting.md](docs/rate-limiting.md))
+- [ ] **Phase 2, production-grade (rest):** OpenAPI docs, CI
 - [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
 
 ## Running locally
@@ -147,6 +148,7 @@ Errors use the RFC 9457 Problem Details format:
   "errors": { "latitude": "must be less than or equal to 90.0" } }
 ```
 
+Rate-limited requests get `429` with `Retry-After`; every `/api` response carries `RateLimit-Limit` / `RateLimit-Remaining`.
 Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MISMATCH`, `ITEM_UNAVAILABLE`,
 `QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`, `INVALID_STATUS_TRANSITION`.
 
@@ -168,6 +170,10 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
 - **Order lifecycle:** an explicit state machine (one table of allowed moves and who may make them); live
   tracking over SSE, with events published to Redis pub/sub after commit so any instance can serve any stream.
   Streams close before graceful shutdown, so deploys don't stall ([details](docs/order-tracking.md)).
+- **Rate limiting:** token buckets in Redis, checked by one atomic Lua script so limits hold across instances
+  (100 concurrent requests through two connections → exactly the 20 allowed). Per-IP and per-account login limits,
+  per-user API and checkout limits, `429` + `Retry-After`; fails open with a circuit breaker if Redis is down
+  ([details](docs/rate-limiting.md)).
 - **Security:** stateless JWTs validated by Spring Security's resource server; roles in URL rules plus
   an object-level ownership check (`@PreAuthorize`) so owners edit only their own menus; login gives the
   same answer and timing for unknown emails and wrong passwords ([details](docs/security.md)).

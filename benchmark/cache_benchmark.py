@@ -10,6 +10,9 @@ Reports latency per endpoint and the number of MongoDB commands the app ran, rea
 Actuator before and after the run. Actuator metrics need an admin token, so the script logs in as the
 seeded local-development admin unless other credentials are passed.
 
+Start the app with RATE_LIMIT_ENABLED=false first: the run sends thousands of requests from one IP, which
+the API-wide rate limit would otherwise answer with 429.
+
 Usage:
     python benchmark/cache_benchmark.py --sessions 1500 --concurrency 20 --label redis
 """
