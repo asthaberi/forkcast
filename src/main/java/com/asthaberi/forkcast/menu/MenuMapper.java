@@ -35,8 +35,9 @@ final class MenuMapper {
     }
 
     static MenuItemResponse toResponse(MenuItem item) {
-        return new MenuItemResponse(item.getId(), item.getName(), item.getDescription(), item.getCategory(),
-                item.getPrice(), item.isVegetarian(), item.getSpiceLevel(), item.getTags(), item.isAvailable());
+        return new MenuItemResponse(item.getId(), item.getRestaurantId(), item.getName(), item.getDescription(),
+                item.getCategory(), item.getPrice(), item.isVegetarian(), item.getSpiceLevel(), item.getTags(),
+                item.isAvailable());
     }
 
     /** Groups items by category (alphabetical), with items sorted by name inside each category. */

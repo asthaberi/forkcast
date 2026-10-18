@@ -28,6 +28,12 @@ public class MenuService {
         return MenuMapper.toMenu(restaurantId, menuItemRepository.findByRestaurantId(restaurantId));
     }
 
+    public MenuItemResponse getItem(String itemId) {
+        return menuItemRepository.findById(itemId)
+                .map(MenuMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Menu item", itemId));
+    }
+
     @CacheEvict(cacheNames = CacheNames.MENUS, key = "#restaurantId")
     public MenuItemResponse addItem(String restaurantId, MenuItemRequest request) {
         restaurantService.requireExists(restaurantId);

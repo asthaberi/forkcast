@@ -7,6 +7,7 @@ import com.asthaberi.forkcast.menu.SpiceLevel;
 
 public record MenuItemResponse(
         String id,
+        String restaurantId,
         String name,
         String description,
         String category,

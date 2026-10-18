@@ -28,7 +28,7 @@ class CacheSerializationTest {
     @Test
     void menuRoundTrips() {
         MenuResponse menu = new MenuResponse("r1", 1, List.of(new MenuCategory("Dosas", List.of(
-                new MenuItemResponse("i1", "Masala Dosa", "Crispy", "Dosas", new BigDecimal("129.50"), true,
+                new MenuItemResponse("i1", "r1", "Masala Dosa", "Crispy", "Dosas", new BigDecimal("129.50"), true,
                         SpiceLevel.MILD, List.of("breakfast"), true)))));
         var serializer = new JacksonJsonRedisSerializer<MenuResponse>(jsonMapper, jsonMapper.constructType(MenuResponse.class));
 

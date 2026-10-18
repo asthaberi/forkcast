@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(MenuController.class)
 class MenuControllerTest {
 
-    private static final MenuItemResponse DOSA = new MenuItemResponse("i1", "Masala Dosa", "Crispy crepe", "Dosas",
+    private static final MenuItemResponse DOSA = new MenuItemResponse("i1", "r1", "Masala Dosa", "Crispy crepe", "Dosas",
             new BigDecimal("129.00"), true, SpiceLevel.MILD, List.of("breakfast"), true);
 
     @Autowired
