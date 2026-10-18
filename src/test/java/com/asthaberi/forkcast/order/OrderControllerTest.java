@@ -45,6 +45,9 @@ class OrderControllerTest {
     @MockitoBean
     private OrderService orderService;
 
+    @MockitoBean
+    private OrderLifecycleService lifecycleService;
+
     @Test
     void newOrderReturns201WithLocation() throws Exception {
         when(orderService.placeOrder(eq("u1"), eq("key-1"), any())).thenReturn(new OrderPlacement(ORDER, true));

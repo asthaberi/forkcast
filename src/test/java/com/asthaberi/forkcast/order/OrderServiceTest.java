@@ -25,6 +25,7 @@ import com.asthaberi.forkcast.common.exception.BusinessException;
 import com.asthaberi.forkcast.common.exception.ErrorCode;
 import com.asthaberi.forkcast.order.OrderService.OrderPlacement;
 import com.asthaberi.forkcast.order.dto.PlaceOrderRequest;
+import com.asthaberi.forkcast.order.events.OrderEventBus;
 import com.asthaberi.forkcast.restaurant.RestaurantService;
 import com.asthaberi.forkcast.restaurant.SearchProperties;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantResponse;
@@ -56,6 +57,8 @@ class OrderServiceTest {
     private RestaurantService restaurantService;
     @Mock
     private PlatformTransactionManager transactionManager;
+    @Mock
+    private OrderEventBus eventBus;
 
     private OrderService orderService;
 
@@ -64,7 +67,8 @@ class OrderServiceTest {
         // 11:00 IST: off-peak, so the delivery radius is 5 km
         Clock clock = Clock.fixed(ZonedDateTime.of(2026, 10, 18, 11, 0, 0, 0, IST).toInstant(), IST);
         SearchProperties search = new SearchProperties(5.0, 3.0, List.of(new SearchProperties.PeakWindow(8, 10)), 7);
-        orderService = new OrderService(orderRepository, cartService, restaurantService, search, clock, transactionManager);
+        orderService = new OrderService(orderRepository, cartService, restaurantService, search, clock, eventBus,
+                transactionManager);
     }
 
     @Test
@@ -83,6 +87,7 @@ class OrderServiceTest {
         });
         assertThat(placement.order().total()).isEqualTo(new BigDecimal("300.90"));
         verify(cartService).clearAfterCheckout(cart);
+        verify(eventBus).publish(any());
     }
 
     @Test
@@ -97,6 +102,7 @@ class OrderServiceTest {
 
         assertThat(placement.created()).isFalse();
         verify(cartService, never()).loadForCheckout(any());
+        verify(eventBus, never()).publish(any());
     }
 
     @Test

@@ -33,9 +33,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Must come before the public GET rule below: a restaurant's orders aren't public
+                        .requestMatchers("/api/v1/restaurants/*/orders/**").hasAnyRole(OWNER, ADMIN)
                         .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurants").hasAnyRole(OWNER, ADMIN)
-                        // Which restaurant's menu an owner may edit is checked per request by RestaurantAccess
+                        // Which restaurant's menu or orders an owner may touch is checked per request by RestaurantAccess
                         .requestMatchers("/api/v1/restaurants/*/menu/**").hasAnyRole(OWNER, ADMIN)
                         .requestMatchers("/api/v1/cart/**", "/api/v1/orders/**").hasRole(CUSTOMER)
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()

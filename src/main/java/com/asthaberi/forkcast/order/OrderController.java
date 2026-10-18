@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
@@ -34,6 +36,7 @@ public class OrderController {
     static final String REPLAYED_HEADER = "Idempotent-Replayed";
 
     private final OrderService orderService;
+    private final OrderLifecycleService lifecycleService;
 
     /**
      * Places an order from the current cart. Returns 201 for a new order, or 200 with
@@ -69,6 +72,15 @@ public class OrderController {
 
     @PostMapping("/{orderId}/cancel")
     public OrderResponse cancel(@CurrentUser String userId, @PathVariable String orderId) {
-        return orderService.cancel(userId, orderId);
+        return lifecycleService.cancelByCustomer(userId, orderId);
+    }
+
+    /**
+     * Live order tracking over Server-Sent Events: the current status first, then every change until
+     * the order is delivered, cancelled or rejected.
+     */
+    @GetMapping(path = "/{orderId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter track(@CurrentUser String userId, @PathVariable String orderId) {
+        return lifecycleService.trackOrder(userId, orderId);
     }
 }

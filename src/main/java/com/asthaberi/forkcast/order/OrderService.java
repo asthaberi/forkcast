@@ -19,13 +19,14 @@ import com.asthaberi.forkcast.common.web.PageResponse;
 import com.asthaberi.forkcast.order.dto.OrderResponse;
 import com.asthaberi.forkcast.order.dto.OrderSummary;
 import com.asthaberi.forkcast.order.dto.PlaceOrderRequest;
+import com.asthaberi.forkcast.order.events.OrderEvent;
+import com.asthaberi.forkcast.order.events.OrderEventBus;
 import com.asthaberi.forkcast.restaurant.RestaurantService;
 import com.asthaberi.forkcast.restaurant.SearchProperties;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantResponse;
 import com.mongodb.MongoException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -44,15 +45,18 @@ public class OrderService {
     private final RestaurantService restaurantService;
     private final SearchProperties searchProperties;
     private final Clock clock;
+    private final OrderEventBus eventBus;
     private final TransactionTemplate transactionTemplate;
 
     public OrderService(OrderRepository orderRepository, CartService cartService, RestaurantService restaurantService,
-                        SearchProperties searchProperties, Clock clock, PlatformTransactionManager transactionManager) {
+                        SearchProperties searchProperties, Clock clock, OrderEventBus eventBus,
+                        PlatformTransactionManager transactionManager) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
         this.restaurantService = restaurantService;
         this.searchProperties = searchProperties;
         this.clock = clock;
+        this.eventBus = eventBus;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -74,6 +78,8 @@ public class OrderService {
             try {
                 Order order = transactionTemplate.execute(status -> placeInTransaction(userId, idempotencyKey, request));
                 log.info("Order {} placed by user {} for {}", order.getId(), userId, order.getTotal());
+                // After the transaction committed: tells the restaurant's live feed a new order arrived
+                eventBus.publish(OrderEvent.of(order));
                 return new OrderPlacement(OrderMapper.toResponse(order), true);
             } catch (RuntimeException e) {
                 if (!isConcurrencyConflict(e)) {
@@ -122,17 +128,6 @@ public class OrderService {
     public PageResponse<OrderSummary> listOrders(String userId, int page, int size) {
         return PageResponse.from(orderRepository.findByUserIdOrderByPlacedAtDesc(userId, PageRequest.of(page, size)),
                 OrderMapper::toSummary);
-    }
-
-    public OrderResponse cancel(String userId, String orderId) {
-        Order order = findOwnOrder(userId, orderId);
-        order.transitionTo(OrderStatus.CANCELLED, OrderActor.CUSTOMER, clock.instant());
-        try {
-            return OrderMapper.toResponse(orderRepository.save(order));
-        } catch (OptimisticLockingFailureException e) {
-            throw new BusinessException(ErrorCode.CONCURRENT_MODIFICATION,
-                    "The order was updated at the same time. Please refresh and try again.");
-        }
     }
 
     // Another user's order id returns 404, not 403, so ids of other people's orders aren't confirmed to exist.

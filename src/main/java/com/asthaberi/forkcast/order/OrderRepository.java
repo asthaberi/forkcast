@@ -1,5 +1,6 @@
 package com.asthaberi.forkcast.order;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -13,4 +14,11 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     Optional<Order> findByIdAndUserId(String id, String userId);
 
     Page<Order> findByUserIdOrderByPlacedAtDesc(String userId, Pageable pageable);
+
+    Optional<Order> findByIdAndRestaurantId(String id, String restaurantId);
+
+    Page<Order> findByRestaurantIdOrderByPlacedAtDesc(String restaurantId, Pageable pageable);
+
+    Page<Order> findByRestaurantIdAndStatusInOrderByPlacedAtDesc(String restaurantId, Collection<OrderStatus> statuses,
+                                                                Pageable pageable);
 }
