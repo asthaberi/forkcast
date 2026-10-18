@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/restaurants/*/menu/**").hasAnyRole(OWNER, ADMIN)
                         .requestMatchers("/api/v1/cart/**", "/api/v1/orders/**").hasRole(CUSTOMER)
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        // API docs (turned off in production with API_DOCS_ENABLED=false)
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").hasRole(ADMIN)
                         // Spring Boot forwards errors to /error; without this, every error would turn into a 401
                         .requestMatchers("/error").permitAll()
