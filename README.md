@@ -8,9 +8,10 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 |---|---|
 | Language / runtime | Java 21 (virtual threads) |
 | Framework | Spring Boot 4.1 (Web MVC, Validation, Actuator) |
-| Database | MongoDB 8 (geospatial queries) |
+| Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / vector store | Redis 8 (Spring Cache) |
 | AI | Spring AI + Google Gemini *(planned)* |
+| Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | Build | Maven (wrapper included) |
 
 ## Roadmap
@@ -19,16 +20,17 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 2:** Restaurants with MongoDB geo search and peak-hour serving radius
 - [x] **Step 3:** Menus and Redis caching (benchmarked: [docs/caching.md](docs/caching.md))
 - [x] **Step 4:** Cart with single-restaurant rule, live pricing and optimistic locking ([docs/cart.md](docs/cart.md))
-- [ ] **Step 5:** Orders
-- [ ] **Phase 2, production-grade:** JWT auth + roles, order state machine, live order tracking (SSE), rate limiting, OpenAPI docs, Testcontainers, CI
+- [x] **Step 5:** Orders: transactional, idempotent checkout ([docs/orders.md](docs/orders.md))
+- [ ] **Phase 2, production-grade:** JWT auth + roles, order state machine, live order tracking (SSE), rate limiting, OpenAPI docs, CI
 - [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
 
 ## Running locally
 
-Prerequisites: JDK 21 and Docker Desktop.
+Prerequisites: JDK 21 and Docker Desktop. Integration tests start their own MongoDB with Testcontainers
+(they're skipped automatically if Docker isn't running): `./mvnw test`.
 
 ```bash
-docker compose up -d      # start MongoDB + Redis
+docker compose up -d      # start MongoDB (single-node replica set) + Redis
 ./mvnw spring-boot:run    # start the API on http://localhost:8080
 ```
 
@@ -89,6 +91,18 @@ freshly priced cart: items, subtotal, delivery fee (₹30, free from ₹499), 5%
 curl -X POST localhost:8080/api/v1/cart/items -H "X-User-Id: astha"      -H "Content-Type: application/json" -d '{"menuItemId":"<id>","quantity":2}'
 ```
 
+### Orders
+
+Same `X-User-Id` header as the cart. Placing an order also needs an `Idempotency-Key` header
+(e.g. a UUID per checkout); repeating the request with the same key returns the same order.
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/v1/orders` | Place an order from the cart, body `{deliveryAddress: {line, latitude, longitude}}` → `201`, or `200` + `Idempotent-Replayed: true` |
+| `GET` | `/api/v1/orders?page=0&size=10` | Order history, newest first |
+| `GET` | `/api/v1/orders/{id}` | Order details with status history |
+| `POST` | `/api/v1/orders/{id}/cancel` | Cancel while still `PLACED` |
+
 ### Errors
 
 Errors use the RFC 9457 Problem Details format:
@@ -99,7 +113,7 @@ Errors use the RFC 9457 Problem Details format:
 ```
 
 Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MISMATCH`, `ITEM_UNAVAILABLE`,
-`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`.
+`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`.
 
 ## Design notes
 
@@ -112,5 +126,9 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   MongoDB queries from a cold cache, 100% at steady state** ([details](docs/caching.md)).
 - **Cart concurrency:** optimistic locking (`@Version`) with re-read-and-retry. Fired 20 simultaneous adds at one
   cart: without it, 86 of 100 "successful" adds were silently lost; with it, zero ([details](docs/cart.md)).
+- **Checkout** creates the order and empties the cart in one MongoDB transaction, is idempotent via an
+  `Idempotency-Key` header with a unique index, and retries only genuine conflicts (incl. MongoDB's
+  `TransientTransactionError` label). Verified with Testcontainers: 10 simultaneous taps → exactly one order
+  ([details](docs/orders.md)).
 - **Prices are never stored in the cart:** every response re-prices against the current (cached) menu with `BigDecimal`.
 - **Opening hours** are stored as `"HH:mm"` strings, so they don't shift with the server's time zone.
