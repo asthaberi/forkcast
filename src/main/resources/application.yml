@@ -49,6 +49,22 @@ forkcast:
       access-token-ttl: 60m
   seed:
     enabled: ${SEED_ENABLED:true}
+    # Demo accounts for local development, created only when seeding is enabled.
+    # The owner account is linked to the restaurant named in "owns".
+    users:
+      - name: Forkcast Admin
+        email: admin@forkcast.example
+        password: ${SEED_ADMIN_PASSWORD:admin-dev-password}
+        roles: [ADMIN]
+      - name: Dosa Junction Owner
+        email: owner@forkcast.example
+        password: ${SEED_OWNER_PASSWORD:owner-dev-password}
+        roles: [RESTAURANT_OWNER]
+        owns: Dosa Junction
+      - name: Demo Customer
+        email: customer@forkcast.example
+        password: ${SEED_CUSTOMER_PASSWORD:customer-dev-password}
+        roles: [CUSTOMER]
   cache:
     menu-ttl: 30m
     nearby-ttl: 5m
