@@ -7,7 +7,8 @@ with some spread out at random. The same seed always generates the same traffic,
 without the cache see identical requests.
 
 Reports latency per endpoint and the number of MongoDB commands the app ran, read from Spring Boot
-Actuator before and after the run.
+Actuator before and after the run. Actuator metrics need an admin token, so the script logs in as the
+seeded local-development admin unless other credentials are passed.
 
 Usage:
     python benchmark/cache_benchmark.py --sessions 1500 --concurrency 20 --label redis
@@ -31,9 +32,18 @@ AREA_RADIUS_KM = 3.0
 MENU_OPEN_CHANCE = 0.6
 
 
-def get_json(url):
-    with urllib.request.urlopen(url, timeout=10) as response:
+def get_json(url, token=None):
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=10) as response:
         return json.load(response)
+
+
+def admin_token(base_url, email, password):
+    req = urllib.request.Request(f"{base_url}/api/v1/auth/login", method="POST",
+                                 data=json.dumps({"email": email, "password": password}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as response:
+        return json.load(response)["accessToken"]
 
 
 def timed_get(url):
@@ -90,14 +100,14 @@ def run_session(base_url, session):
     return results
 
 
-def mongo_command_count(base_url):
-    data = get_json(f"{base_url}/actuator/metrics/mongodb.driver.commands")
+def mongo_command_count(base_url, token):
+    data = get_json(f"{base_url}/actuator/metrics/mongodb.driver.commands", token)
     return next(m["value"] for m in data["measurements"] if m["statistic"] == "COUNT")
 
 
-def cache_gets(base_url, result):
+def cache_gets(base_url, result, token):
     try:
-        data = get_json(f"{base_url}/actuator/metrics/cache.gets?tag=result:{result}")
+        data = get_json(f"{base_url}/actuator/metrics/cache.gets?tag=result:{result}", token)
         return data["measurements"][0]["value"]
     except Exception:
         return 0.0  # metric absent when caching is disabled
@@ -117,20 +127,23 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--label", default="run")
     parser.add_argument("--json-out")
+    parser.add_argument("--admin-email", default="admin@forkcast.example")
+    parser.add_argument("--admin-password", default="admin-dev-password")
     args = parser.parse_args()
+    token = admin_token(args.base_url, args.admin_email, args.admin_password)
 
     sessions = build_sessions(args.sessions, args.seed)
-    mongo_before = mongo_command_count(args.base_url)
-    hits_before, misses_before = cache_gets(args.base_url, "hit"), cache_gets(args.base_url, "miss")
+    mongo_before = mongo_command_count(args.base_url, token)
+    hits_before, misses_before = cache_gets(args.base_url, "hit", token), cache_gets(args.base_url, "miss", token)
 
     start = time.perf_counter()
     with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         all_results = [r for rs in pool.map(lambda s: run_session(args.base_url, s), sessions) for r in rs]
     elapsed = time.perf_counter() - start
 
-    mongo_commands = mongo_command_count(args.base_url) - mongo_before
-    hits = cache_gets(args.base_url, "hit") - hits_before
-    misses = cache_gets(args.base_url, "miss") - misses_before
+    mongo_commands = mongo_command_count(args.base_url, token) - mongo_before
+    hits = cache_gets(args.base_url, "hit", token) - hits_before
+    misses = cache_gets(args.base_url, "miss", token) - misses_before
 
     report = {"label": args.label, "sessions": args.sessions, "requests": len(all_results),
               "errors": sum(1 for _, _, status in all_results if status != 200),

@@ -8,6 +8,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 |---|---|
 | Language / runtime | Java 21 (virtual threads) |
 | Framework | Spring Boot 4.1 (Web MVC, Validation, Actuator) |
+| Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / vector store | Redis 8 (Spring Cache) |
 | AI | Spring AI + Google Gemini *(planned)* |
@@ -21,7 +22,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 3:** Menus and Redis caching (benchmarked: [docs/caching.md](docs/caching.md))
 - [x] **Step 4:** Cart with single-restaurant rule, live pricing and optimistic locking ([docs/cart.md](docs/cart.md))
 - [x] **Step 5:** Orders: transactional, idempotent checkout ([docs/orders.md](docs/orders.md))
-- [ ] **Phase 2, production-grade:** JWT auth + roles, order state machine, live order tracking (SSE), rate limiting, OpenAPI docs, CI
+- [x] **Step 6:** JWT authentication, roles and restaurant ownership ([docs/security.md](docs/security.md))
+- [ ] **Phase 2, production-grade (rest):** order state machine, live order tracking (SSE), rate limiting, OpenAPI docs, CI
 - [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
 
 ## Running locally
@@ -35,11 +37,28 @@ docker compose up -d      # start MongoDB (single-node replica set) + Redis
 ```
 
 Health check: <http://localhost:8080/actuator/health>
-Cache hit/miss counts: <http://localhost:8080/actuator/metrics/cache.gets>
+Metrics such as cache hit/miss counts: `/actuator/metrics/cache.gets` *(admin token)*
 
-On first start, 12 sample restaurants around Gwalior and 62 menu items are seeded (`SEED_ENABLED=false` turns it off).
+On first start, 12 sample restaurants around Gwalior, 62 menu items and three demo accounts (admin, the owner of
+Dosa Junction, a customer; see [docs/security.md](docs/security.md)) are seeded. `SEED_ENABLED=false` turns it off.
 
 ## API
+
+### Authentication
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/v1/auth/register` | `{name, email, password, accountType?}`; `accountType` is `CUSTOMER` (default) or `RESTAURANT_OWNER` |
+| `POST` | `/api/v1/auth/login` | `{email, password}` → `{accessToken, tokenType: "Bearer", expiresIn}` |
+| `GET` | `/api/v1/users/me` | The signed-in user |
+
+Send the token as `Authorization: Bearer <token>`. Browsing restaurants and menus is public; the cart and
+orders need a customer, and menu edits need the restaurant's owner or an admin
+([full rules](docs/security.md)).
+
+```bash
+TOKEN=$(curl -s -X POST localhost:8080/api/v1/auth/login -H "Content-Type: application/json"   -d '{"email":"customer@forkcast.example","password":"customer-dev-password"}' | jq -r .accessToken)
+```
 
 ### Restaurants
 
@@ -47,7 +66,7 @@ On first start, 12 sample restaurants around Gwalior and 62 menu items are seede
 |---|---|---|
 | `GET` | `/api/v1/restaurants?latitude=&longitude=` | Restaurants near a point, nearest first |
 | `GET` | `/api/v1/restaurants/{id}` | One restaurant |
-| `POST` | `/api/v1/restaurants` | Create a restaurant |
+| `POST` | `/api/v1/restaurants` | Create a restaurant *(owner/admin; the creator becomes its owner)* |
 
 Search parameters:
 
@@ -67,7 +86,7 @@ curl "http://localhost:8080/api/v1/restaurants?latitude=26.2124&longitude=78.177
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/v1/restaurants/{id}/menu` | Menu grouped by category (cached) |
-| `POST` | `/api/v1/restaurants/{id}/menu/items` | Add an item |
+| `POST` | `/api/v1/restaurants/{id}/menu/items` | Add an item *(that restaurant's owner, or admin)* |
 | `PUT` | `/api/v1/restaurants/{id}/menu/items/{itemId}` | Replace an item |
 | `DELETE` | `/api/v1/restaurants/{id}/menu/items/{itemId}` | Remove an item |
 
@@ -76,8 +95,8 @@ spice level (`NONE`/`MILD`/`MEDIUM`/`HOT`), tags and availability.
 
 ### Cart
 
-All cart endpoints need an `X-User-Id` header *(temporary, until JWT auth)*. Every response is the full,
-freshly priced cart: items, subtotal, delivery fee (₹30, free from ₹499), 5% GST and total.
+Cart endpoints need a customer token. Every response is the full, freshly priced cart: items,
+subtotal, delivery fee (₹30, free from ₹499), 5% GST and total.
 
 | Method | Path | Description |
 |---|---|---|
@@ -88,12 +107,12 @@ freshly priced cart: items, subtotal, delivery fee (₹30, free from ₹499), 5%
 | `DELETE` | `/api/v1/cart` | Empty the cart |
 
 ```bash
-curl -X POST localhost:8080/api/v1/cart/items -H "X-User-Id: astha"      -H "Content-Type: application/json" -d '{"menuItemId":"<id>","quantity":2}'
+curl -X POST localhost:8080/api/v1/cart/items -H "Authorization: Bearer $TOKEN"      -H "Content-Type: application/json" -d '{"menuItemId":"<id>","quantity":2}'
 ```
 
 ### Orders
 
-Same `X-User-Id` header as the cart. Placing an order also needs an `Idempotency-Key` header
+Need a customer token. Placing an order also needs an `Idempotency-Key` header
 (e.g. a UUID per checkout); repeating the request with the same key returns the same order.
 
 | Method | Path | Description |
@@ -130,5 +149,8 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   `Idempotency-Key` header with a unique index, and retries only genuine conflicts (incl. MongoDB's
   `TransientTransactionError` label). Verified with Testcontainers: 10 simultaneous taps → exactly one order
   ([details](docs/orders.md)).
+- **Security:** stateless JWTs validated by Spring Security's resource server; roles in URL rules plus
+  an object-level ownership check (`@PreAuthorize`) so owners edit only their own menus; login gives the
+  same answer and timing for unknown emails and wrong passwords ([details](docs/security.md)).
 - **Prices are never stored in the cart:** every response re-prices against the current (cached) menu with `BigDecimal`.
 - **Opening hours** are stored as `"HH:mm"` strings, so they don't shift with the server's time zone.

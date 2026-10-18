@@ -66,8 +66,7 @@ system never lies: under extreme contention (20 writers on one document at the s
 requests are rejected with a clear, retryable `409`, and at realistic contention the retries absorb
 every conflict.
 
-## Identity (temporary)
+## Identity
 
-Until JWT authentication is added, the user is identified by an `X-User-Id` header, resolved into
-controller parameters by `@CurrentUser`. Controllers only depend on the annotation, so switching to
-JWT changes only `CurrentUserArgumentResolver`. **Anyone can send any id, so this is for local use only.**
+Cart endpoints need a customer's JWT (`Authorization: Bearer <token>`). The user id comes from the
+token's subject through `@CurrentUser`. See [security.md](security.md).
