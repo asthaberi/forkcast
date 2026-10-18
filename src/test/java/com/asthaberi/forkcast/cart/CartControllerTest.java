@@ -1,5 +1,6 @@
 package com.asthaberi.forkcast.cart;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,6 +19,8 @@ import com.asthaberi.forkcast.cart.dto.AddCartItemRequest;
 import com.asthaberi.forkcast.cart.dto.CartResponse;
 import com.asthaberi.forkcast.common.exception.BusinessException;
 import com.asthaberi.forkcast.common.exception.ErrorCode;
+import com.asthaberi.forkcast.security.TestJwt;
+import com.asthaberi.forkcast.security.WithApiSecurity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -25,6 +29,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CartController.class)
+@WithApiSecurity
 class CartControllerTest {
 
     @Autowired
@@ -34,21 +39,27 @@ class CartControllerTest {
     private CartService cartService;
 
     @Test
-    void requiresUserIdHeader() throws Exception {
+    void requiresAToken() throws Exception {
         mockMvc.perform(get("/api/v1/cart"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate", startsWith("Bearer")))
                 .andExpect(jsonPath("$.title").value("Unauthenticated"));
-
-        mockMvc.perform(get("/api/v1/cart").header("X-User-Id", "not valid!"))
-                .andExpect(status().isUnauthorized());
         verifyNoInteractions(cartService);
     }
 
     @Test
-    void getReturnsCartForHeaderUser() throws Exception {
+    void restaurantOwnersCannotUseACart() throws Exception {
+        mockMvc.perform(get("/api/v1/cart").with(TestJwt.owner("o1")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.title").value("Forbidden"));
+        verifyNoInteractions(cartService);
+    }
+
+    @Test
+    void getReturnsCartOfTheTokenUser() throws Exception {
         when(cartService.getCart("u1")).thenReturn(CartResponse.empty());
 
-        mockMvc.perform(get("/api/v1/cart").header("X-User-Id", "u1"))
+        mockMvc.perform(get("/api/v1/cart").with(TestJwt.customer("u1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0.00))
                 .andExpect(jsonPath("$.items").isEmpty());
@@ -60,7 +71,7 @@ class CartControllerTest {
                 ErrorCode.CART_RESTAURANT_MISMATCH, "Your cart has items from Dosa Junction.",
                 Map.of("currentRestaurantId", "r1", "currentRestaurantName", "Dosa Junction")));
 
-        mockMvc.perform(post("/api/v1/cart/items").header("X-User-Id", "u1")
+        mockMvc.perform(post("/api/v1/cart/items").with(TestJwt.customer("u1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "menuItemId": "pizza", "quantity": 1 }
@@ -75,7 +86,7 @@ class CartControllerTest {
     void replaceFlagIsPassedThrough() throws Exception {
         when(cartService.addItem(eq("u1"), any(), eq(true))).thenReturn(CartResponse.empty());
 
-        mockMvc.perform(post("/api/v1/cart/items").param("replace", "true").header("X-User-Id", "u1")
+        mockMvc.perform(post("/api/v1/cart/items").param("replace", "true").with(TestJwt.customer("u1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "menuItemId": "pizza", "quantity": 1 }
@@ -87,7 +98,7 @@ class CartControllerTest {
 
     @Test
     void validatesQuantity() throws Exception {
-        mockMvc.perform(post("/api/v1/cart/items").header("X-User-Id", "u1")
+        mockMvc.perform(post("/api/v1/cart/items").with(TestJwt.customer("u1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "menuItemId": "pizza", "quantity": 0 }
@@ -98,7 +109,7 @@ class CartControllerTest {
 
     @Test
     void clearReturns204() throws Exception {
-        mockMvc.perform(delete("/api/v1/cart").header("X-User-Id", "u1"))
+        mockMvc.perform(delete("/api/v1/cart").with(TestJwt.customer("u1")))
                 .andExpect(status().isNoContent());
 
         verify(cartService).clear("u1");

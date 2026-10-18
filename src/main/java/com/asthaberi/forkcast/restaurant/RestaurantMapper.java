@@ -12,7 +12,7 @@ final class RestaurantMapper {
     private RestaurantMapper() {
     }
 
-    static Restaurant toEntity(CreateRestaurantRequest request) {
+    static Restaurant toEntity(CreateRestaurantRequest request, String ownerId) {
         return Restaurant.builder()
                 .name(request.name().trim())
                 .address(request.address().trim())
@@ -26,6 +26,7 @@ final class RestaurantMapper {
                 .closesAt(request.closesAt())
                 .rating(request.rating() == null ? 0.0 : request.rating())
                 .imageUrl(request.imageUrl())
+                .ownerId(ownerId)
                 .build();
     }
 

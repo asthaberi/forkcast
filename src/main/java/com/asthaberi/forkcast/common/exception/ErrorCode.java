@@ -16,7 +16,10 @@ public enum ErrorCode {
     CART_HAS_UNAVAILABLE_ITEMS(HttpStatus.CONFLICT, "Cart has unavailable items"),
     RESTAURANT_CLOSED(HttpStatus.CONFLICT, "Restaurant closed"),
     OUT_OF_DELIVERY_RANGE(HttpStatus.UNPROCESSABLE_CONTENT, "Address out of delivery range"),
-    ORDER_NOT_CANCELLABLE(HttpStatus.CONFLICT, "Order not cancellable");
+    ORDER_NOT_CANCELLABLE(HttpStatus.CONFLICT, "Order not cancellable"),
+    EMAIL_ALREADY_REGISTERED(HttpStatus.CONFLICT, "Email already registered"),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
+    PASSWORD_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT, "Password too long");
 
     private final HttpStatus status;
     private final String title;

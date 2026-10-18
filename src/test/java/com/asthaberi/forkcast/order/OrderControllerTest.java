@@ -16,6 +16,8 @@ import java.util.List;
 
 import com.asthaberi.forkcast.order.OrderService.OrderPlacement;
 import com.asthaberi.forkcast.order.dto.OrderResponse;
+import com.asthaberi.forkcast.security.TestJwt;
+import com.asthaberi.forkcast.security.WithApiSecurity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @WebMvcTest(OrderController.class)
+@WithApiSecurity
 class OrderControllerTest {
 
     private static final String BODY = """
@@ -72,7 +75,7 @@ class OrderControllerTest {
 
     @Test
     void deliveryAddressIsValidated() throws Exception {
-        mockMvc.perform(post("/api/v1/orders").header("X-User-Id", "u1").header("Idempotency-Key", "k")
+        mockMvc.perform(post("/api/v1/orders").with(TestJwt.customer("u1")).header("Idempotency-Key", "k")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "deliveryAddress": { "line": "", "latitude": 200 } }
@@ -85,13 +88,13 @@ class OrderControllerTest {
 
     @Test
     void pageSizeIsCapped() throws Exception {
-        mockMvc.perform(get("/api/v1/orders").header("X-User-Id", "u1").param("size", "500"))
+        mockMvc.perform(get("/api/v1/orders").with(TestJwt.customer("u1")).param("size", "500"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.size").exists());
     }
 
     private static MockHttpServletRequestBuilder placeOrder() {
-        return post("/api/v1/orders").header("X-User-Id", "u1")
+        return post("/api/v1/orders").with(TestJwt.customer("u1"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(BODY);
     }

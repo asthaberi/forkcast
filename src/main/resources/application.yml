@@ -41,6 +41,12 @@ management:
 forkcast:
   # Business time zone for open/peak hours, independent of the server's zone.
   time-zone: Asia/Kolkata
+  security:
+    jwt:
+      # Local-development fallback only. Always set JWT_SECRET (32+ random bytes) anywhere else.
+      secret: ${JWT_SECRET:dev-only-forkcast-jwt-secret-change-me-0123456789}
+      issuer: forkcast
+      access-token-ttl: 60m
   seed:
     enabled: ${SEED_ENABLED:true}
   cache:

@@ -1,6 +1,7 @@
 package com.asthaberi.forkcast.restaurant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +15,8 @@ import java.util.List;
 import com.asthaberi.forkcast.common.exception.ResourceNotFoundException;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantResponse;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantSearchResponse;
+import com.asthaberi.forkcast.security.TestJwt;
+import com.asthaberi.forkcast.security.WithApiSecurity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -26,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * the service is a mock, so no database is needed.
  */
 @WebMvcTest(RestaurantController.class)
+@WithApiSecurity
 class RestaurantControllerTest {
 
     @Autowired
@@ -77,9 +81,9 @@ class RestaurantControllerTest {
 
     @Test
     void createReturns201WithLocation() throws Exception {
-        when(restaurantService.create(any())).thenReturn(sampleResponse(null));
+        when(restaurantService.create(any(), eq("owner-1"))).thenReturn(sampleResponse(null));
 
-        mockMvc.perform(post("/api/v1/restaurants")
+        mockMvc.perform(post("/api/v1/restaurants").with(TestJwt.owner("owner-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -101,7 +105,7 @@ class RestaurantControllerTest {
 
     @Test
     void createValidatesBody() throws Exception {
-        mockMvc.perform(post("/api/v1/restaurants")
+        mockMvc.perform(post("/api/v1/restaurants").with(TestJwt.owner("owner-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "name": "", "cuisines": [] }
@@ -110,6 +114,15 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.errors.name").exists())
                 .andExpect(jsonPath("$.errors.latitude").exists())
                 .andExpect(jsonPath("$.errors.cuisines").exists());
+    }
+
+    @Test
+    void searchIsPublicButCreatingNeedsAnOwnerOrAdmin() throws Exception {
+        mockMvc.perform(post("/api/v1/restaurants").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/restaurants").with(TestJwt.customer("c1"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
     }
 
     private static RestaurantResponse sampleResponse(Double distanceKm) {

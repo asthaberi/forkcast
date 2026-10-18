@@ -50,6 +50,10 @@ public class Restaurant {
 
     private String imageUrl;
 
+    // User who manages this restaurant and its menu; null for restaurants managed only by admins.
+    @Indexed
+    private String ownerId;
+
     public double latitude() {
         return location.getY();
     }

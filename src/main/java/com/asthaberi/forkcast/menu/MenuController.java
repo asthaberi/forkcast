@@ -5,9 +5,11 @@ import java.net.URI;
 import com.asthaberi.forkcast.menu.dto.MenuItemRequest;
 import com.asthaberi.forkcast.menu.dto.MenuItemResponse;
 import com.asthaberi.forkcast.menu.dto.MenuResponse;
+import com.asthaberi.forkcast.security.RestaurantAccess;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +32,7 @@ public class MenuController {
         return menuService.getMenu(restaurantId);
     }
 
+    @PreAuthorize(RestaurantAccess.CAN_MANAGE)
     @PostMapping("/items")
     public ResponseEntity<MenuItemResponse> addItem(@PathVariable String restaurantId,
                                                     @Valid @RequestBody MenuItemRequest request) {
@@ -41,12 +44,14 @@ public class MenuController {
         return ResponseEntity.created(location).body(created);
     }
 
+    @PreAuthorize(RestaurantAccess.CAN_MANAGE)
     @PutMapping("/items/{itemId}")
     public MenuItemResponse updateItem(@PathVariable String restaurantId, @PathVariable String itemId,
                                        @Valid @RequestBody MenuItemRequest request) {
         return menuService.updateItem(restaurantId, itemId, request);
     }
 
+    @PreAuthorize(RestaurantAccess.CAN_MANAGE)
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Void> deleteItem(@PathVariable String restaurantId, @PathVariable String itemId) {
         menuService.deleteItem(restaurantId, itemId);

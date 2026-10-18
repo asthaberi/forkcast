@@ -60,8 +60,9 @@ public class RestaurantService {
         }
     }
 
-    public RestaurantResponse create(CreateRestaurantRequest request) {
-        Restaurant saved = restaurantRepository.save(RestaurantMapper.toEntity(request));
+    /** @param ownerId the user creating the restaurant, who becomes its owner */
+    public RestaurantResponse create(CreateRestaurantRequest request, String ownerId) {
+        Restaurant saved = restaurantRepository.save(RestaurantMapper.toEntity(request, ownerId));
         return RestaurantMapper.toResponse(RestaurantSnapshot.from(saved), LocalTime.now(clock), null);
     }
 

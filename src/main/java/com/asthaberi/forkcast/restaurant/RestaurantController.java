@@ -2,6 +2,7 @@ package com.asthaberi.forkcast.restaurant;
 
 import java.net.URI;
 
+import com.asthaberi.forkcast.common.web.CurrentUser;
 import com.asthaberi.forkcast.restaurant.dto.CreateRestaurantRequest;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantResponse;
 import com.asthaberi.forkcast.restaurant.dto.RestaurantSearchResponse;
@@ -45,8 +46,9 @@ public class RestaurantController {
     }
 
     @PostMapping
-    public ResponseEntity<RestaurantResponse> create(@Valid @RequestBody CreateRestaurantRequest request) {
-        RestaurantResponse created = restaurantService.create(request);
+    public ResponseEntity<RestaurantResponse> create(@CurrentUser String userId,
+                                                     @Valid @RequestBody CreateRestaurantRequest request) {
+        RestaurantResponse created = restaurantService.create(request, userId);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(created.id())

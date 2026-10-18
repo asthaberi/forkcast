@@ -41,7 +41,7 @@ class RestaurantSeeder implements ApplicationRunner {
         try (InputStream in = new ClassPathResource(SEED_FILE).getInputStream()) {
             List<CreateRestaurantRequest> requests = jsonMapper.readValue(in, new TypeReference<>() {
             });
-            restaurantRepository.saveAll(requests.stream().map(RestaurantMapper::toEntity).toList());
+            restaurantRepository.saveAll(requests.stream().map(request -> RestaurantMapper.toEntity(request, null)).toList());
             log.info("Seeded {} restaurants from {}", requests.size(), SEED_FILE);
         }
     }

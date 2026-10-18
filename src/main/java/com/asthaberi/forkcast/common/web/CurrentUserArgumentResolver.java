@@ -1,9 +1,10 @@
 package com.asthaberi.forkcast.common.web;
 
-import java.util.regex.Pattern;
-
 import com.asthaberi.forkcast.common.exception.UnauthenticatedException;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -11,15 +12,11 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
- * TEMPORARY: reads the user id from an {@code X-User-Id} header until JWT authentication is added.
- * Anyone can send any id, so this is for local development only.
+ * Resolves {@link CurrentUser} parameters to the user id in the verified JWT's subject claim.
+ * The token was already validated by Spring Security's resource-server filter before the controller runs.
  */
 @Component
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
-
-    public static final String USER_ID_HEADER = "X-User-Id";
-
-    private static final Pattern VALID_USER_ID = Pattern.compile("[A-Za-z0-9_-]{1,64}");
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -29,10 +26,12 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     @Override
     public String resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        String userId = webRequest.getHeader(USER_ID_HEADER);
-        if (userId == null || !VALID_USER_ID.matcher(userId).matches()) {
-            throw new UnauthenticatedException("Missing or invalid " + USER_ID_HEADER + " header");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            // Only reachable if an endpoint using @CurrentUser was wrongly made public
+            throw new UnauthenticatedException("Authentication required");
         }
-        return userId;
+        return authentication.getName();
     }
 }
