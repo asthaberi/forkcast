@@ -30,6 +30,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ProblemDetail handleBusinessRule(BusinessException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(ex.code().status(), ex.getMessage());
+        problem.setTitle(ex.code().title());
+        problem.setProperty("code", ex.code().name());
+        ex.details().forEach(problem::setProperty);
+        return problem;
+    }
+
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ProblemDetail handleUnauthenticated(UnauthenticatedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problem.setTitle("Unauthenticated");
+        return problem;
+    }
+
     // Invalid @RequestBody (@Valid on a DTO)
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
