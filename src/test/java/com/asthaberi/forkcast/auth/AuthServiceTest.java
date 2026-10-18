@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -19,6 +20,9 @@ import com.asthaberi.forkcast.auth.dto.RegisterRequest.AccountType;
 import com.asthaberi.forkcast.auth.dto.TokenResponse;
 import com.asthaberi.forkcast.common.exception.BusinessException;
 import com.asthaberi.forkcast.common.exception.ErrorCode;
+import com.asthaberi.forkcast.ratelimit.RateLimitDecision;
+import com.asthaberi.forkcast.ratelimit.RateLimitExceededException;
+import com.asthaberi.forkcast.ratelimit.RateLimiter;
 import com.asthaberi.forkcast.user.Role;
 import com.asthaberi.forkcast.user.User;
 import com.asthaberi.forkcast.user.UserRepository;
@@ -43,12 +47,15 @@ class AuthServiceTest {
     @Mock
     private TokenService tokenService;
 
+    // Allows everything unless a test says otherwise
+    private RateLimiter rateLimiter = RateLimiter.DISABLED;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         authService = new AuthService(userRepository, passwordEncoder, tokenService,
-                Clock.fixed(Instant.parse("2026-10-18T07:00:00Z"), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse("2026-10-18T07:00:00Z"), ZoneOffset.UTC), rateLimiter);
     }
 
     @Test
@@ -121,6 +128,22 @@ class AuthServiceTest {
         assertThat(unknownEmail.code()).isEqualTo(ErrorCode.INVALID_CREDENTIALS);
         assertThat(unknownEmail.getMessage()).isEqualTo(wrongPassword.getMessage());
         verify(tokenService, never()).issueAccessToken(any());
+    }
+
+    @Test
+    void perAccountLoginLimitRejectsBeforeCheckingThePassword() {
+        RateLimitDecision exhausted = new RateLimitDecision(false, 10, 0, Duration.ofSeconds(90));
+        rateLimiter = (policy, key) -> {
+            assertThat(policy).isEqualTo("login-account");
+            assertThat(key).isEqualTo("astha@example.com");
+            return exhausted;
+        };
+        setUp();
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest(" Astha@Example.com", "guess")))
+                .isInstanceOf(RateLimitExceededException.class)
+                .hasMessageContaining("90 s");
+        verify(userRepository, never()).findByEmail(any());
     }
 
     private User user(String email, String password) {

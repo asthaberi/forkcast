@@ -1,6 +1,9 @@
 package com.asthaberi.forkcast.security;
 
 import com.asthaberi.forkcast.auth.TokenService;
+import com.asthaberi.forkcast.ratelimit.ApiRateLimitFilter;
+import com.asthaberi.forkcast.ratelimit.RateLimiter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,7 +14,9 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @EnableMethodSecurity
@@ -27,7 +32,9 @@ public class SecurityConfig {
      * itself, so another site can't forge an authenticated request.
      */
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailsSecurityHandlers handlers) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailsSecurityHandlers handlers,
+                                            ObjectProvider<RateLimiter> rateLimiter, JsonMapper jsonMapper)
+            throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,6 +60,10 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(handlers)
                         .accessDeniedHandler(handlers));
+        // Created here rather than as a bean: a Filter bean would also be registered by Spring Boot as a
+        // servlet filter and run twice per request. Absent in web-slice tests, which have no RateLimiter.
+        rateLimiter.ifAvailable(limiter -> http.addFilterAfter(new ApiRateLimitFilter(limiter, jsonMapper),
+                BearerTokenAuthenticationFilter.class));
         return http.build();
     }
 

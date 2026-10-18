@@ -3,6 +3,7 @@ package com.asthaberi.forkcast.auth;
 import com.asthaberi.forkcast.auth.dto.LoginRequest;
 import com.asthaberi.forkcast.auth.dto.RegisterRequest;
 import com.asthaberi.forkcast.auth.dto.TokenResponse;
+import com.asthaberi.forkcast.ratelimit.RateLimit;
 import com.asthaberi.forkcast.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @RateLimit(policy = "register", by = RateLimit.KeyType.IP)
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
@@ -27,6 +29,7 @@ public class AuthController {
     }
 
     /** Returns a bearer token to send as {@code Authorization: Bearer <token>}. */
+    @RateLimit(policy = "login", by = RateLimit.KeyType.IP)
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);

@@ -41,6 +41,31 @@ management:
 forkcast:
   # Business time zone for open/peak hours, independent of the server's zone.
   time-zone: Asia/Kolkata
+  rate-limit:
+    # false turns all limits off, e.g. for load tests sent from one machine
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # Token buckets: up to `capacity` requests in a burst, refilled at refill-tokens per refill-period.
+    policies:
+      api:                # every /api request, per user (or per IP when signed out)
+        capacity: 200
+        refill-tokens: 200
+        refill-period: 1m
+      login:              # per IP
+        capacity: 10
+        refill-tokens: 10
+        refill-period: 1m
+      login-account:      # per email, whatever IP the attempts come from
+        capacity: 10
+        refill-tokens: 10
+        refill-period: 15m
+      register:           # per IP
+        capacity: 5
+        refill-tokens: 5
+        refill-period: 1h
+      place-order:        # per user
+        capacity: 10
+        refill-tokens: 10
+        refill-period: 1m
   security:
     jwt:
       # Local-development fallback only. Always set JWT_SECRET (32+ random bytes) anywhere else.

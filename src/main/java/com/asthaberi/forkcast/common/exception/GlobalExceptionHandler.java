@@ -3,6 +3,7 @@ package com.asthaberi.forkcast.common.exception;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.asthaberi.forkcast.ratelimit.RateLimitExceededException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -38,6 +39,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setProperty("code", ex.code().name());
         ex.details().forEach(problem::setProperty);
         return problem;
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ProblemDetail> handleRateLimited(RateLimitExceededException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problem.setTitle("Too many requests");
+        problem.setProperty("code", "RATE_LIMITED");
+        problem.setProperty("retryAfterSeconds", ex.decision().retryAfterSeconds());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.decision().retryAfterSeconds()))
+                .body(problem);
     }
 
     @ExceptionHandler(UnauthenticatedException.class)

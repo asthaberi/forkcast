@@ -51,7 +51,7 @@ import org.testcontainers.mongodb.MongoDBContainer;
  */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT,
-        properties = {"forkcast.seed.enabled=false", "spring.cache.type=none"})
+        properties = {"forkcast.seed.enabled=false", "spring.cache.type=none", "forkcast.rate-limit.enabled=false"})
 class OrderTrackingIntegrationTest {
 
     @Container

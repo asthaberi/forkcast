@@ -13,6 +13,7 @@ import com.asthaberi.forkcast.auth.dto.RegisterRequest.AccountType;
 import com.asthaberi.forkcast.auth.dto.TokenResponse;
 import com.asthaberi.forkcast.common.exception.BusinessException;
 import com.asthaberi.forkcast.common.exception.ErrorCode;
+import com.asthaberi.forkcast.ratelimit.RateLimiter;
 import com.asthaberi.forkcast.user.Role;
 import com.asthaberi.forkcast.user.User;
 import com.asthaberi.forkcast.user.UserRepository;
@@ -34,14 +35,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final Clock clock;
+    private final RateLimiter rateLimiter;
     private final String dummyPasswordHash;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, TokenService tokenService,
-                       Clock clock) {
+                       Clock clock, RateLimiter rateLimiter) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.clock = clock;
+        this.rateLimiter = rateLimiter;
         // Hash compared against when the email doesn't exist; see login()
         this.dummyPasswordHash = passwordEncoder.encode("forkcast-timing-equalizer");
     }
@@ -74,7 +77,11 @@ public class AuthService {
      * the message nor the response time tells an attacker which emails have accounts.
      */
     public TokenResponse login(LoginRequest request) {
-        Optional<User> user = userRepository.findByEmail(normalizeEmail(request.email()));
+        String email = normalizeEmail(request.email());
+        // Per-account limit, on top of the per-IP one: slows password guessing against one account from
+        // many IPs. Applied to unknown emails too, so the limit itself doesn't reveal which accounts exist.
+        rateLimiter.consumeOrThrow("login-account", email);
+        Optional<User> user = userRepository.findByEmail(email);
         boolean passwordMatches = request.password().getBytes(StandardCharsets.UTF_8).length <= MAX_PASSWORD_BYTES
                 && passwordEncoder.matches(request.password(), user.map(User::getPasswordHash).orElse(dummyPasswordHash));
         if (user.isEmpty() || !passwordMatches) {

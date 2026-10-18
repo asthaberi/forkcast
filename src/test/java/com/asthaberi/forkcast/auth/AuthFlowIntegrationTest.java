@@ -43,7 +43,7 @@ import org.testcontainers.mongodb.MongoDBContainer;
  */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.cache.type=none",
-        "management.health.redis.enabled=false"})
+        "management.health.redis.enabled=false", "forkcast.rate-limit.enabled=false"})
 @AutoConfigureMockMvc
 class AuthFlowIntegrationTest {
 

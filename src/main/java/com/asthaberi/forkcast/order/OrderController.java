@@ -8,6 +8,7 @@ import com.asthaberi.forkcast.order.OrderService.OrderPlacement;
 import com.asthaberi.forkcast.order.dto.OrderResponse;
 import com.asthaberi.forkcast.order.dto.OrderSummary;
 import com.asthaberi.forkcast.order.dto.PlaceOrderRequest;
+import com.asthaberi.forkcast.ratelimit.RateLimit;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -42,6 +43,7 @@ public class OrderController {
      * Places an order from the current cart. Returns 201 for a new order, or 200 with
      * {@code Idempotent-Replayed: true} and the original order when the key was already used.
      */
+    @RateLimit(policy = "place-order", by = RateLimit.KeyType.USER)
     @PostMapping
     public ResponseEntity<OrderResponse> placeOrder(
             @CurrentUser String userId,
