@@ -17,6 +17,7 @@ public enum ErrorCode {
     RESTAURANT_CLOSED(HttpStatus.CONFLICT, "Restaurant closed"),
     OUT_OF_DELIVERY_RANGE(HttpStatus.UNPROCESSABLE_CONTENT, "Address out of delivery range"),
     ORDER_NOT_CANCELLABLE(HttpStatus.CONFLICT, "Order not cancellable"),
+    INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Invalid status change"),
     EMAIL_ALREADY_REGISTERED(HttpStatus.CONFLICT, "Email already registered"),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
     PASSWORD_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT, "Password too long");

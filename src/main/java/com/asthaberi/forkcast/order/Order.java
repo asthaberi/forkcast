@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.asthaberi.forkcast.common.exception.BusinessException;
 import com.asthaberi.forkcast.common.exception.ErrorCode;
@@ -24,6 +25,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @CompoundIndex(name = "user_idempotency_key", def = "{'userId': 1, 'idempotencyKey': 1}", unique = true)
 // Supports "my orders, newest first" without an in-memory sort.
 @CompoundIndex(name = "user_placed_at", def = "{'userId': 1, 'placedAt': -1}")
+// Supports a restaurant's order queue filtered by status, newest first.
+@CompoundIndex(name = "restaurant_status_placed_at", def = "{'restaurantId': 1, 'status': 1, 'placedAt': -1}")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Order {
@@ -57,7 +60,7 @@ public class Order {
 
     private Instant placedAt;
 
-    // Guards status changes, e.g. a customer cancelling while the restaurant accepts.
+    // Guards status changes: a customer cancelling while the restaurant accepts can't both succeed.
     @Version
     private Long version;
 
@@ -77,25 +80,37 @@ public class Order {
         order.total = total;
         order.deliveryAddress = deliveryAddress;
         order.status = OrderStatus.PLACED;
-        order.statusHistory = new ArrayList<>(List.of(new StatusChange(OrderStatus.PLACED, placedAt)));
+        order.statusHistory = new ArrayList<>(
+                List.of(new StatusChange(OrderStatus.PLACED, placedAt, OrderActor.CUSTOMER)));
         order.placedAt = placedAt;
         return order;
     }
 
-    /** Customers can cancel only before the restaurant has accepted the order. */
-    public void cancel(Instant at) {
-        if (status != OrderStatus.PLACED) {
-            throw new BusinessException(ErrorCode.ORDER_NOT_CANCELLABLE,
-                    "Order can no longer be cancelled (status " + status + ")");
+    /**
+     * Moves the order to a new status if the state machine allows this actor to; see {@link OrderStatus}.
+     */
+    public void transitionTo(OrderStatus target, OrderActor actor, Instant at) {
+        if (!status.canMoveTo(target, actor)) {
+            if (target == OrderStatus.CANCELLED && actor == OrderActor.CUSTOMER) {
+                throw new BusinessException(ErrorCode.ORDER_NOT_CANCELLABLE,
+                        "Order can no longer be cancelled (status " + status + ")");
+            }
+            throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION,
+                    "Can't move an order from " + status + " to " + target,
+                    Map.of("from", status, "to", target, "allowed", status.nextFor(actor)));
         }
-        status = OrderStatus.CANCELLED;
-        statusHistory.add(new StatusChange(OrderStatus.CANCELLED, at));
+        status = target;
+        statusHistory.add(new StatusChange(target, at, actor));
+    }
+
+    public Instant lastChangedAt() {
+        return statusHistory.getLast().at();
     }
 
     public int itemCount() {
         return lines.stream().mapToInt(OrderLine::quantity).sum();
     }
 
-    public record StatusChange(OrderStatus status, Instant at) {
+    public record StatusChange(OrderStatus status, Instant at, OrderActor actor) {
     }
 }

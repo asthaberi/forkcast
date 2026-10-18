@@ -126,7 +126,7 @@ public class OrderService {
 
     public OrderResponse cancel(String userId, String orderId) {
         Order order = findOwnOrder(userId, orderId);
-        order.cancel(clock.instant());
+        order.transitionTo(OrderStatus.CANCELLED, OrderActor.CUSTOMER, clock.instant());
         try {
             return OrderMapper.toResponse(orderRepository.save(order));
         } catch (OptimisticLockingFailureException e) {
