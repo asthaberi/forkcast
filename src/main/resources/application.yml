@@ -48,6 +48,9 @@ management:
   endpoint:
     health:
       show-details: always
+      # /actuator/health/liveness and /readiness, for container and Kubernetes health checks
+      probes:
+        enabled: true
 
 forkcast:
   # Business time zone for open/peak hours, independent of the server's zone.

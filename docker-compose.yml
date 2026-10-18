@@ -1,5 +1,7 @@
 # Local infrastructure for Forkcast.
-# Start: docker compose up -d    Stop: docker compose down
+#   docker compose up -d                       MongoDB + Redis only (run the app from your IDE / mvnw)
+#   docker compose --profile app up -d --build  everything, including the app container on :8080
+#   docker compose down                         stop
 services:
   # MongoDB runs as a single-node replica set because multi-document transactions
   # (used when placing an order) are only available on replica sets, not standalone servers.
@@ -28,6 +30,32 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+
+  app:
+    profiles: [app]
+    build: .
+    image: forkcast:local
+    container_name: forkcast-app
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      # Service names, not localhost: inside the compose network each container has its own localhost
+      MONGODB_URI: mongodb://mongodb:27017/forkcast?directConnection=true
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-dev-only-forkcast-jwt-secret-change-me-0123456789}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+    # Time for graceful shutdown (closing live streams, finishing requests) before Docker kills it
+    stop_grace_period: 35s
 
 volumes:
   mongo-data:
