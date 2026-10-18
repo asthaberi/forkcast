@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 @Configuration
@@ -24,6 +26,15 @@ public class MongoConfig {
                 .registerConverters(List.of(new LocalTimeToStringConverter(), new StringToLocalTimeConverter()))
                 // Store BigDecimal (prices) as MongoDB's exact Decimal128 type rather than a string.
                 .bigDecimal(MongoCustomConversions.BigDecimalRepresentation.DECIMAL128));
+    }
+
+    /**
+     * Enables Spring transactions (TransactionTemplate / @Transactional) for MongoDB. Spring Boot doesn't
+     * register this automatically because multi-document transactions need a replica set.
+     */
+    @Bean
+    MongoTransactionManager transactionManager(MongoDatabaseFactory databaseFactory) {
+        return new MongoTransactionManager(databaseFactory);
     }
 
     @WritingConverter

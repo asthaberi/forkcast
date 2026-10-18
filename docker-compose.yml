@@ -1,13 +1,23 @@
 # Local infrastructure for Forkcast.
 # Start: docker compose up -d    Stop: docker compose down
 services:
+  # MongoDB runs as a single-node replica set because multi-document transactions
+  # (used when placing an order) are only available on replica sets, not standalone servers.
   mongodb:
     image: mongo:8.0
     container_name: forkcast-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    # Initiates the replica set on first start; afterwards just reports its status.
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status().ok } catch (e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]}).ok }"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
 
   # Redis 8 ships with the Redis Query Engine (vector search built in),
   # which we'll reuse later for semantic dish search.

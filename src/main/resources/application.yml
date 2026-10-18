@@ -9,7 +9,8 @@ spring:
       enabled: true
 
   mongodb:
-    uri: ${MONGODB_URI:mongodb://localhost:27017/forkcast}
+    # directConnection: talk to the single replica-set member directly, whatever host name it advertises
+    uri: ${MONGODB_URI:mongodb://localhost:27017/forkcast?directConnection=true}
 
   data:
     mongodb:
