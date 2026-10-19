@@ -1,5 +1,7 @@
 # Forkcast
 
+[![CI](https://github.com/asthaberi/forkcast/actions/workflows/ci.yml/badge.svg)](https://github.com/asthaberi/forkcast/actions/workflows/ci.yml)
+
 AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-up rebuild of my earlier project, QEats.
 
 ## Tech stack
@@ -37,6 +39,12 @@ Prerequisites: JDK 21 and Docker Desktop. Integration tests start their own Mong
 ```bash
 docker compose up -d      # start MongoDB (single-node replica set) + Redis
 ./mvnw spring-boot:run    # start the API on http://localhost:8080
+```
+
+Or run the published image (built and pushed by CI on every commit to `main`):
+
+```bash
+docker pull ghcr.io/asthaberi/forkcast:latest
 ```
 
 Or run everything, including the app, in Docker:
