@@ -44,7 +44,7 @@ import org.testcontainers.mongodb.MongoDBContainer;
  * prove any of those. Skipped when Docker isn't available.
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.cache.type=none"})
+@SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.cache.type=none", "spring.data.redis.port=1"})
 class OrderPlacementIntegrationTest {
 
     @Container

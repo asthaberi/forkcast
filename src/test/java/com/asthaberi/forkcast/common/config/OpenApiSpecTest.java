@@ -22,7 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
  * Checks the generated OpenAPI contract and writes it to target/openapi.json (CI publishes it).
  * Generating the spec only needs the controllers, so this runs without a database.
  */
-@SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.data.mongodb.auto-index-creation=false"})
+// Redis points at a closed port so the test never depends on a Redis that happens to run locally
+@SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.data.mongodb.auto-index-creation=false",
+        "spring.data.redis.port=1"})
 @AutoConfigureMockMvc
 class OpenApiSpecTest {
 

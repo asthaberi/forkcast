@@ -43,7 +43,9 @@ import org.testcontainers.mongodb.MongoDBContainer;
  */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = {"forkcast.seed.enabled=false", "spring.cache.type=none",
-        "management.health.redis.enabled=false", "forkcast.rate-limit.enabled=false"})
+        "management.health.redis.enabled=false", "forkcast.rate-limit.enabled=false",
+        // No Redis in this test: a closed port, so a locally running Redis can't be used by accident
+        "spring.data.redis.port=1"})
 @AutoConfigureMockMvc
 class AuthFlowIntegrationTest {
 
