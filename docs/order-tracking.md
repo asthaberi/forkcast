@@ -86,12 +86,34 @@ streams it holds (`OrderEventStreams`).
   after its transaction commits. A rolled-back change is never announced.
 - **Redis down:** the publish is logged and dropped. The database is still correct, and a reconnecting
   client's first event is the current status, so it catches up.
+- **Redis down when the app starts:** the app still starts. `OrderEventSubscriber` subscribes on a
+  background virtual thread and retries with exponential backoff (1 s up to 30 s), using a fresh
+  listener container per attempt.
 - **Heartbeat:** a comment line every 20 s keeps idle connections from being cut by proxies, and detects
   clients that went away so their streams can be freed.
 
 **Verified live with two instances** (ports 8080 and 8081, shared MongoDB and Redis): an order placed on
 A reached the owner's feed on B in 252 ms, and each status change made on A reached the customer's stream
 on B in 39–96 ms.
+
+### Startup without Redis: a bug found by CI
+
+The first version declared the `RedisMessageListenerContainer` as a plain bean, assuming it would reconnect
+by itself. It does, but only once it's running. If Redis is unreachable during its **first** subscribe,
+`start()` throws and **the whole application fails to start**. All tests passed on my machine because a
+development Redis was always running on `localhost:6379`. Tests that didn't start their own Redis had been
+quietly using it. On GitHub Actions nothing listens there, and 16 tests in the 4 classes that start the
+full app without a Redis container failed.
+
+Fixes:
+
+- **Code:** the subscription moved off the startup path (`OrderEventSubscriber`, a `SmartLifecycle` that
+  subscribes in the background and retries).
+- **Tests:** tests that don't need Redis now point it at a closed port (`spring.data.redis.port=1`), so they
+  behave identically everywhere. `ForkcastApplicationTests` now asserts the app starts with Redis down.
+- **New test:** `OrderEventSubscriberIntegrationTest` pauses a Redis container, checks `start()` returns in
+  under 200 ms without failing, unpauses Redis, and asserts the subscription connects (about 1 s later)
+  and delivers a real event.
 
 ### Graceful shutdown: a bug found by a test
 

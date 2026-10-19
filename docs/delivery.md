@@ -77,5 +77,10 @@ Other details:
 - **Least privilege:** the workflow token is read-only, and only the image job may write packages.
 - **Concurrency:** a new push cancels the still-running pipeline for the same branch.
 
-Checked locally: the workflow file parses (SnakeYAML) and the exact test command passes (143 tests).
-A real run happens once the repository is on GitHub.
+### What the first CI run caught
+
+The first run on GitHub failed: 16 errors across the 4 test classes that start the full application
+without their own Redis. Locally a development Redis was always running, so these tests had silently
+depended on it, and the app itself couldn't start when Redis was down. Both are fixed; see
+[order-tracking.md](order-tracking.md#startup-without-redis-a-bug-found-by-ci). This is why CI runs on a
+clean machine: it catches what an always-on local environment hides.
