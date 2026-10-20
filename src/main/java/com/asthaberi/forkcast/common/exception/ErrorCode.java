@@ -20,7 +20,9 @@ public enum ErrorCode {
     INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Invalid status change"),
     EMAIL_ALREADY_REGISTERED(HttpStatus.CONFLICT, "Email already registered"),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
-    PASSWORD_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT, "Password too long");
+    PASSWORD_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT, "Password too long"),
+    INCOMPLETE_LOCATION(HttpStatus.BAD_REQUEST, "Incomplete location"),
+    AI_SEARCH_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Semantic search unavailable");
 
     private final HttpStatus status;
     private final String title;

@@ -40,6 +40,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/search/**").permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         // Must come before the public GET rule below: a restaurant's orders aren't public
                         .requestMatchers("/api/v1/restaurants/*/orders/**").hasAnyRole(OWNER, ADMIN)
                         .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/**").permitAll()
