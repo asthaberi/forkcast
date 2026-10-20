@@ -13,7 +13,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
-| AI | Spring AI + Google Gemini *(planned)* |
+| AI | Spring AI 2.0 + Google Gemini embeddings, Redis 8 vector search |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | API docs | springdoc-openapi (OpenAPI 3.1, Swagger UI) |
 | Build & delivery | Maven wrapper, multi-stage Docker image, GitHub Actions → GitHub Container Registry |
@@ -29,7 +29,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 7:** Order state machine and live tracking over SSE, scaled out with Redis pub/sub ([docs/order-tracking.md](docs/order-tracking.md))
 - [x] **Step 8:** Distributed rate limiting: Redis token buckets in an atomic Lua script ([docs/rate-limiting.md](docs/rate-limiting.md))
 - [x] **Step 9:** OpenAPI/Swagger docs, Docker image, GitHub Actions CI ([docs/delivery.md](docs/delivery.md))
-- [ ] **Phase 3, AI:** semantic dish search, review summarization, personalized recommendations
+- [x] **Step 10:** Semantic dish search with Gemini embeddings + Redis vector search, evaluated against BM25 ([docs/semantic-search.md](docs/semantic-search.md))
+- [ ] **Phase 3, AI (rest):** review summarization, personalized recommendations
 
 ## Running locally
 
@@ -157,6 +158,20 @@ For the restaurant's owner (or an admin):
 curl -N -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/orders/<orderId>/events
 ```
 
+### AI search
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/search/dishes?q=` | Find dishes by meaning; optional `latitude`/`longitude`/`radiusKm`, `vegetarian`, `maxPrice`, `limit` |
+| `POST` | `/api/v1/admin/search/reindex` | Rebuild the index *(admin)* |
+
+```bash
+curl "localhost:8080/api/v1/search/dishes?q=something+to+cool+me+down+on+a+hot+day&latitude=26.2124&longitude=78.1772"
+```
+
+Needs `GEMINI_API_KEY` (free from [Google AI Studio](https://aistudio.google.com/apikey)) in your environment or
+a `.env` file; without it the endpoint answers `503` and everything else works.
+
 ### Errors
 
 Errors use the RFC 9457 Problem Details format:
@@ -188,6 +203,10 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
 - **Order lifecycle:** an explicit state machine (one table of allowed moves and who may make them); live
   tracking over SSE, with events published to Redis pub/sub after commit so any instance can serve any stream.
   Streams close before graceful shutdown, so deploys don't stall ([details](docs/order-tracking.md)).
+- **Semantic search:** dishes embedded with Gemini (`RETRIEVAL_DOCUMENT` vs `RETRIEVAL_QUERY`) into Redis
+  vector search, with location/veg/price filters inside the KNN query and results read fresh from MongoDB.
+  On 20 labelled natural-language queries: **Hit@1 0.95 vs 0.80 and Recall@5 0.98 vs 0.71 for BM25**; the
+  minimum score is picked by a threshold sweep ([details](docs/semantic-search.md)).
 - **Delivery:** layered, non-root Docker image (code changes ship as a <1 MB layer), Compose for the full
   stack, and CI that runs all tests, including Testcontainers, before building and publishing the image
   ([details](docs/delivery.md)).
