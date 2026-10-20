@@ -65,6 +65,16 @@
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-google-genai-embedding</artifactId>
 		</dependency>
+		<!-- Spring AI's Gemini chat model (review summaries); also the library, created in AiConfig -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-google-genai</artifactId>
+		</dependency>
+		<!-- Spring AI's ChatClient: prompts, system messages and structured (JSON -> record) output -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-client-chat</artifactId>
+		</dependency>
 		<!-- Redis as the vector store (Redis 8 has vector search built in); configured by hand in SemanticSearchConfig -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>

@@ -1,6 +1,11 @@
 package com.asthaberi.forkcast.search;
 
+import com.google.genai.Client;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatModel;
+import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
+import org.springframework.ai.google.genai.common.GoogleGenAiThinkingLevel;
 import org.springframework.ai.google.genai.embedding.GoogleGenAiEmbeddingConnectionDetails;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingModel;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingOptions;
@@ -31,6 +36,28 @@ public class AiConfig {
                 new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_DOCUMENT)),
                 new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_QUERY)),
                 gemini.dimensions());
+    }
+
+    /**
+     * Gemini chat model for writing review summaries. Low temperature: summaries should be consistent and
+     * stick to what reviewers said, not be creative. JSON output so the answer maps onto a Java record.
+     * Thinking is kept to a minimum: Gemini counts its hidden reasoning tokens against maxOutputTokens, which
+     * cut the JSON off mid-sentence with Flash (979 thinking tokens of a 1024 budget), and summarising
+     * doesn't need it.
+     */
+    @Bean
+    @ConditionalOnExpression("!'${forkcast.ai.gemini.api-key:}'.isBlank()")
+    ChatModel reviewChatModel(GeminiProperties gemini) {
+        return GoogleGenAiChatModel.builder()
+                .genAiClient(Client.builder().apiKey(gemini.apiKey()).build())
+                .options(GoogleGenAiChatOptions.builder()
+                        .model(gemini.chatModel())
+                        .temperature(0.2)
+                        .maxOutputTokens(2048)
+                        .thinkingLevel(GoogleGenAiThinkingLevel.MINIMAL)
+                        .responseMimeType("application/json")
+                        .build())
+                .build();
     }
 
     /**

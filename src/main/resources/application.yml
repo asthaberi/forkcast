@@ -67,6 +67,9 @@ forkcast:
       embedding-model: gemini-embedding-001
       # Gemini embeddings can be truncated (Matryoshka); 768 dims keep the Redis index small
       dimensions: 768
+      # Writes review summaries. Pinned to a version (not "-latest") so behaviour can't change silently.
+      # Flash-Lite over Flash: ~2 s vs ~13 s median on the same prompt, same quality (docs/reviews.md).
+      chat-model: gemini-3.5-flash-lite
     search:
       # Changing the embedding model, dimensions or text format? Bump the version: a new, empty index
       # gets built in the background while the old one is ignored.
