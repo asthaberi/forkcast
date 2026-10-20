@@ -19,6 +19,7 @@ public record RestaurantSnapshot(
         double longitude,
         List<String> cuisines,
         double rating,
+        int reviewCount,
         LocalTime opensAt,
         LocalTime closesAt,
         String imageUrl) {
@@ -26,7 +27,8 @@ public record RestaurantSnapshot(
     static RestaurantSnapshot from(Restaurant restaurant) {
         return new RestaurantSnapshot(restaurant.getId(), restaurant.getName(), restaurant.getAddress(),
                 restaurant.getCity(), restaurant.latitude(), restaurant.longitude(), restaurant.getCuisines(),
-                restaurant.getRating(), restaurant.getOpensAt(), restaurant.getClosesAt(), restaurant.getImageUrl());
+                restaurant.getRating(), restaurant.getReviewCount(), restaurant.getOpensAt(), restaurant.getClosesAt(),
+                restaurant.getImageUrl());
     }
 
     boolean isOpenAt(LocalTime time) {

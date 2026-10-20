@@ -40,6 +40,7 @@ final class RestaurantMapper {
                 restaurant.longitude(),
                 restaurant.cuisines(),
                 restaurant.rating(),
+                restaurant.reviewCount(),
                 restaurant.opensAt(),
                 restaurant.closesAt(),
                 restaurant.isOpenAt(now),

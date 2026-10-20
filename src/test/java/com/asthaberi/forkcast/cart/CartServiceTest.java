@@ -130,7 +130,7 @@ class CartServiceTest {
     private void givenAvailableDosa() {
         when(menuService.getItem("dosa")).thenReturn(DOSA);
         when(restaurantService.getById("r1")).thenReturn(new RestaurantResponse("r1", "Dosa Junction", "Patel Nagar",
-                "Gwalior", 26.208, 78.185, List.of("south indian"), 4.2, LocalTime.of(7, 0), LocalTime.of(22, 0),
+                "Gwalior", 26.208, 78.185, List.of("south indian"), 4.2, 0, LocalTime.of(7, 0), LocalTime.of(22, 0),
                 true, null, null));
     }
 }

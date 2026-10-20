@@ -105,7 +105,7 @@ class RestaurantServiceTest {
     }
 
     private static RestaurantSnapshot snapshot(String id, String name, double lat, double lng, String opens, String closes) {
-        return new RestaurantSnapshot(id, name, "address", "Gwalior", lat, lng, List.of("north indian"), 4.0,
+        return new RestaurantSnapshot(id, name, "address", "Gwalior", lat, lng, List.of("north indian"), 4.0, 0,
                 LocalTime.parse(opens), LocalTime.parse(closes), null);
     }
 }

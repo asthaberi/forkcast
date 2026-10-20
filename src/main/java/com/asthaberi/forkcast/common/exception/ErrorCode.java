@@ -22,7 +22,10 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
     PASSWORD_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT, "Password too long"),
     INCOMPLETE_LOCATION(HttpStatus.BAD_REQUEST, "Incomplete location"),
-    AI_SEARCH_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Semantic search unavailable");
+    AI_SEARCH_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Semantic search unavailable"),
+    REVIEW_NOT_ALLOWED(HttpStatus.CONFLICT, "Review not allowed"),
+    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Already reviewed"),
+    AI_SUMMARY_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Review summary unavailable");
 
     private final HttpStatus status;
     private final String title;

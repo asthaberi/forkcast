@@ -19,6 +19,7 @@ public record RestaurantResponse(
         double longitude,
         List<String> cuisines,
         double rating,
+        int reviewCount,
         LocalTime opensAt,
         LocalTime closesAt,
         boolean openNow,

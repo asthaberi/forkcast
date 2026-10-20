@@ -46,7 +46,12 @@ public class Restaurant {
 
     private LocalTime closesAt;
 
+    // Average stars, kept in step with reviewCount and ratingTotal by one atomic MongoDB update per review
     private double rating;
+
+    private int reviewCount;
+
+    private int ratingTotal;
 
     private String imageUrl;
 

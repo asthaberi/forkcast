@@ -42,7 +42,7 @@ class CacheSerializationTest {
     @Test
     void nearbySnapshotListRoundTrips() {
         List<RestaurantSnapshot> snapshots = List.of(new RestaurantSnapshot("r1", "Midnight Biryani Co.", "Morar",
-                "Gwalior", 26.225, 78.205, List.of("biryani"), 4.5, LocalTime.of(18, 0), LocalTime.of(3, 0), null));
+                "Gwalior", 26.225, 78.205, List.of("biryani"), 4.5, 0, LocalTime.of(18, 0), LocalTime.of(3, 0), null));
         JavaType type = jsonMapper.getTypeFactory().constructCollectionType(List.class, RestaurantSnapshot.class);
         var serializer = new JacksonJsonRedisSerializer<List<RestaurantSnapshot>>(jsonMapper, type);
 

@@ -127,6 +127,6 @@ class RestaurantControllerTest {
 
     private static RestaurantResponse sampleResponse(Double distanceKm) {
         return new RestaurantResponse("r1", "Spice Route Kitchen", "City Centre", "Gwalior", 26.2150, 78.1800,
-                List.of("north indian"), 4.4, LocalTime.of(11, 0), LocalTime.of(23, 0), true, distanceKm, null);
+                List.of("north indian"), 4.4, 0, LocalTime.of(11, 0), LocalTime.of(23, 0), true, distanceKm, null);
     }
 }

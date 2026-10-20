@@ -207,7 +207,7 @@ class OrderServiceTest {
 
     private void givenRestaurant(boolean open) {
         when(restaurantService.getById("r1")).thenReturn(new RestaurantResponse("r1", "Dosa Junction", "Patel Nagar",
-                "Gwalior", 26.2080, 78.1850, List.of("south indian"), 4.2, LocalTime.of(7, 0), LocalTime.of(22, 0),
+                "Gwalior", 26.2080, 78.1850, List.of("south indian"), 4.2, 0, LocalTime.of(7, 0), LocalTime.of(22, 0),
                 open, null, null));
     }
 
