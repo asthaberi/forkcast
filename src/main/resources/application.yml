@@ -2,9 +2,10 @@ spring:
   application:
     name: forkcast
 
-  # Local secrets such as GEMINI_API_KEY can live in a git-ignored .env file next to the project
+  # Local secrets such as GEMINI_API_KEY can live in a git-ignored .env file next to the project.
+  # Tests point forkcast.env-file elsewhere (see pom.xml) so they never use a developer's real keys.
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:${forkcast.env-file:.env}[.properties]
 
   # Java 21 virtual threads: every request runs on a cheap virtual thread,
   # so blocking calls (MongoDB, Redis, LLM APIs) don't exhaust a thread pool.
