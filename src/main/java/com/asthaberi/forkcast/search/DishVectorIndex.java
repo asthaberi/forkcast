@@ -3,6 +3,12 @@ package com.asthaberi.forkcast.search;
 import static org.springframework.ai.vectorstore.redis.RedisVectorStore.MetadataField.numeric;
 import static org.springframework.ai.vectorstore.redis.RedisVectorStore.MetadataField.tag;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +16,11 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.redis.RedisVectorStore;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
+import org.json.JSONArray;
 import redis.clients.jedis.RedisClient;
+import redis.clients.jedis.args.SortingOrder;
+import redis.clients.jedis.json.Path2;
+import redis.clients.jedis.search.FTSearchParams;
 
 /**
  * The Redis vector index of dishes.
@@ -76,6 +86,72 @@ public class DishVectorIndex {
         } catch (RuntimeException e) {
             return 0;
         }
+    }
+
+    /**
+     * The stored embeddings of these dishes, by menu item id. Reads vectors already in Redis; nothing is sent
+     * to Gemini. Dishes that aren't indexed are left out.
+     */
+    public Map<String, float[]> vectorsOf(Collection<String> menuItemIds) {
+        List<String> ids = List.copyOf(menuItemIds);
+        Map<String, float[]> vectors = new HashMap<>();
+        if (ids.isEmpty()) {
+            return vectors;
+        }
+        List<JSONArray> results = redisClient.jsonMGet(Path2.of("$.embedding"),
+                ids.stream().map(id -> properties.keyPrefix() + id).toArray(String[]::new));
+        for (int i = 0; i < ids.size(); i++) {
+            JSONArray matches = results.get(i);
+            if (matches != null && !matches.isEmpty()) {
+                JSONArray values = matches.getJSONArray(0);
+                float[] vector = new float[values.length()];
+                for (int d = 0; d < vector.length; d++) {
+                    vector[d] = values.getFloat(d);
+                }
+                vectors.put(ids.get(i), vector);
+            }
+        }
+        return vectors;
+    }
+
+    /**
+     * The k available dishes nearest to a vector, among the given restaurants: a KNN query in Redis with the
+     * filters applied inside it. Unlike {@code store().similaritySearch}, this starts from a vector rather than
+     * a text, so no embedding call is needed.
+     */
+    public List<Neighbour> nearest(float[] vector, int k, Collection<String> restaurantIds, boolean vegetarianOnly) {
+        if (restaurantIds.isEmpty()) {
+            return List.of();
+        }
+        String filter = "@available:{true} @restaurantId:{" + String.join(" | ", restaurantIds) + "}"
+                + (vegetarianOnly ? " @vegetarian:{true}" : "");
+        FTSearchParams params = FTSearchParams.searchParams()
+                .addParam("vector", toBytes(vector))
+                .returnFields("distance")
+                .sortBy("distance", SortingOrder.ASC)
+                .limit(0, k)
+                .dialect(2);
+        List<Neighbour> neighbours = new ArrayList<>();
+        for (var document : redisClient.ftSearch(properties.indexName(),
+                "(" + filter + ")=>[KNN " + k + " @embedding $vector AS distance]", params).getDocuments()) {
+            // Redis reports cosine distance (1 - cosine similarity)
+            double similarity = 1 - Double.parseDouble(document.getString("distance"));
+            neighbours.add(new Neighbour(document.getId().substring(properties.keyPrefix().length()), similarity));
+        }
+        return neighbours;
+    }
+
+    /** @param similarity cosine similarity, -1..1 */
+    public record Neighbour(String menuItemId, double similarity) {
+    }
+
+    // Redis vector query parameters are raw little-endian float32 bytes
+    private static byte[] toBytes(float[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(vector.length * Float.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        for (float value : vector) {
+            buffer.putFloat(value);
+        }
+        return buffer.array();
     }
 
     private RedisVectorStore create() {

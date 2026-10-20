@@ -12,4 +12,7 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
 
     /** The reviews a summary is written from: the most recent ones. */
     List<Review> findTop40ByRestaurantIdOrderByCreatedAtDesc(String restaurantId);
+
+    /** A customer's own reviews; their star ratings feed recommendations. */
+    List<Review> findByUserId(String userId);
 }

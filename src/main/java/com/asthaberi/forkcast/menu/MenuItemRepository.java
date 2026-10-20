@@ -1,5 +1,6 @@
 package com.asthaberi.forkcast.menu;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,4 +11,6 @@ public interface MenuItemRepository extends MongoRepository<MenuItem, String> {
     List<MenuItem> findByRestaurantId(String restaurantId);
 
     Optional<MenuItem> findByIdAndRestaurantId(String id, String restaurantId);
+
+    List<MenuItem> findByRestaurantIdInAndAvailableTrue(Collection<String> restaurantIds);
 }

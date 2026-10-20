@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurants").hasAnyRole(OWNER, ADMIN)
                         // Which restaurant's menu or orders an owner may touch is checked per request by RestaurantAccess
                         .requestMatchers("/api/v1/restaurants/*/menu/**").hasAnyRole(OWNER, ADMIN)
-                        .requestMatchers("/api/v1/cart/**", "/api/v1/orders/**").hasRole(CUSTOMER)
+                        .requestMatchers("/api/v1/cart/**", "/api/v1/orders/**", "/api/v1/recommendations/**").hasRole(CUSTOMER)
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         // API docs (turned off in production with API_DOCS_ENABLED=false)
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

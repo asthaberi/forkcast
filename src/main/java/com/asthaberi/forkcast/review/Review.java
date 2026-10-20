@@ -27,6 +27,7 @@ public class Review {
     @Indexed(unique = true, sparse = true)
     private String orderId;
 
+    @Indexed
     private String userId;
 
     // A display name snapshot ("Astha B."), so listing reviews needs no user lookups and shows no email
