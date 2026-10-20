@@ -12,15 +12,21 @@ import org.springframework.ai.embedding.EmbeddingResponse;
  *
  * The vector store embeds documents through {@link #call} and the search text through
  * {@link #embed(String)}, so each path is routed to the matching model.
+ *
+ * It also reports the configured vector size. The vector store sizes its Redis index from
+ * {@link #dimensions()}, and Spring AI's Gemini model returns the model's default (3072) there even when
+ * configured for 768, so the index rejected every 768-dimension vector. Found on the first live run.
  */
 public class RetrievalEmbeddingModel implements EmbeddingModel {
 
     private final EmbeddingModel documentModel;
     private final EmbeddingModel queryModel;
+    private final int dimensions;
 
-    public RetrievalEmbeddingModel(EmbeddingModel documentModel, EmbeddingModel queryModel) {
+    public RetrievalEmbeddingModel(EmbeddingModel documentModel, EmbeddingModel queryModel, int dimensions) {
         this.documentModel = documentModel;
         this.queryModel = queryModel;
+        this.dimensions = dimensions;
     }
 
     @Override
@@ -40,6 +46,6 @@ public class RetrievalEmbeddingModel implements EmbeddingModel {
 
     @Override
     public int dimensions() {
-        return documentModel.dimensions();
+        return dimensions;
     }
 }

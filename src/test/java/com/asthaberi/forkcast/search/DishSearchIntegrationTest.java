@@ -81,6 +81,7 @@ class DishSearchIntegrationTest {
     @Test
     void indexesEverySeededDishOnStartup() {
         assertThat(index.documentCount()).isEqualTo(menuItemRepository.count()).isEqualTo(62);
+        assertThat(index.indexingFailures()).isZero();
     }
 
     @Test

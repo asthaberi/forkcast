@@ -65,6 +65,19 @@ public class DishVectorIndex {
         }
     }
 
+    /**
+     * Documents Redis stored but couldn't index (e.g. a vector of the wrong size). Redis doesn't reject
+     * these writes, so without checking this number such failures go unnoticed.
+     */
+    public long indexingFailures() {
+        try {
+            Map<String, Object> info = redisClient.ftInfo(properties.indexName());
+            return Long.parseLong(String.valueOf(info.get("hash_indexing_failures")));
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
     private RedisVectorStore create() {
         EmbeddingModel model = embeddingModel.getIfAvailable();
         if (model == null) {
@@ -80,7 +93,7 @@ public class DishVectorIndex {
                 .initializeSchema(true)
                 .build();
         vectorStore.afterPropertiesSet();
-        log.info("Vector index {} ready", properties.indexName());
+        log.info("Vector index {} ready ({} dimensions)", properties.indexName(), model.dimensions());
         return vectorStore;
     }
 }

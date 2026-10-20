@@ -29,7 +29,8 @@ public class AiConfig {
                 .build();
         return new RetrievalEmbeddingModel(
                 new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_DOCUMENT)),
-                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_QUERY)));
+                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_QUERY)),
+                gemini.dimensions());
     }
 
     /**

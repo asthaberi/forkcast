@@ -72,6 +72,12 @@ public class DishIndexer {
         for (int from = 0; from < documents.size(); from += BATCH_SIZE) {
             index.store().add(documents.subList(from, Math.min(from + BATCH_SIZE, documents.size())));
         }
+        long failures = index.indexingFailures();
+        if (failures > 0) {
+            // Redis accepts the writes but silently leaves such documents out of the index
+            log.error("{} dishes were stored but Redis couldn't index them (check the vector dimensions); "
+                    + "semantic search will miss them", failures);
+        }
         log.info("Indexed {} dishes", documents.size());
         return documents.size();
     }
