@@ -8,6 +8,7 @@ import com.asthaberi.forkcast.menu.dto.MenuResponse;
 import com.asthaberi.forkcast.restaurant.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ public class MenuService {
 
     private final MenuItemRepository menuItemRepository;
     private final RestaurantService restaurantService;
+    private final ApplicationEventPublisher events;
 
     @Cacheable(cacheNames = CacheNames.MENUS, key = "#restaurantId")
     public MenuResponse getMenu(String restaurantId) {
@@ -38,6 +40,7 @@ public class MenuService {
     public MenuItemResponse addItem(String restaurantId, MenuItemRequest request) {
         restaurantService.requireExists(restaurantId);
         MenuItem saved = menuItemRepository.save(MenuMapper.toEntity(restaurantId, request));
+        events.publishEvent(new MenuItemChangedEvent(saved.getId(), false));
         return MenuMapper.toResponse(saved);
     }
 
@@ -45,12 +48,15 @@ public class MenuService {
     public MenuItemResponse updateItem(String restaurantId, String itemId, MenuItemRequest request) {
         MenuItem item = findItem(restaurantId, itemId);
         MenuMapper.apply(request, item);
-        return MenuMapper.toResponse(menuItemRepository.save(item));
+        MenuItem saved = menuItemRepository.save(item);
+        events.publishEvent(new MenuItemChangedEvent(saved.getId(), false));
+        return MenuMapper.toResponse(saved);
     }
 
     @CacheEvict(cacheNames = CacheNames.MENUS, key = "#restaurantId")
     public void deleteItem(String restaurantId, String itemId) {
         menuItemRepository.delete(findItem(restaurantId, itemId));
+        events.publishEvent(new MenuItemChangedEvent(itemId, true));
     }
 
     // Looking up by id AND restaurantId stops one restaurant's URL from editing another's items.

@@ -2,6 +2,10 @@ spring:
   application:
     name: forkcast
 
+  # Local secrets such as GEMINI_API_KEY can live in a git-ignored .env file next to the project
+  config:
+    import: optional:file:.env[.properties]
+
   # Java 21 virtual threads: every request runs on a cheap virtual thread,
   # so blocking calls (MongoDB, Redis, LLM APIs) don't exhaust a thread pool.
   threads:
@@ -55,6 +59,23 @@ management:
 forkcast:
   # Business time zone for open/peak hours, independent of the server's zone.
   time-zone: Asia/Kolkata
+  ai:
+    gemini:
+      # From https://aistudio.google.com/apikey. Without a key the app runs normally; semantic search answers 503.
+      api-key: ${GEMINI_API_KEY:}
+      embedding-model: gemini-embedding-001
+      # Gemini embeddings can be truncated (Matryoshka); 768 dims keep the Redis index small
+      dimensions: 768
+    search:
+      # Changing the embedding model, dimensions or text format? Bump the version: a new, empty index
+      # gets built in the background while the old one is ignored.
+      index-name: forkcast-dishes-v1
+      key-prefix: "dish:v1:"
+      default-limit: 10
+      max-limit: 30
+      # Minimum match score. Spring AI's Redis store reports (1 + cosine) / 2, so 0.55 means cosine >= 0.1;
+      # tuned with benchmark/search_eval.py
+      min-similarity: 0.55
   rate-limit:
     # false turns all limits off, e.g. for load tests sent from one machine
     enabled: ${RATE_LIMIT_ENABLED:true}
@@ -79,6 +100,10 @@ forkcast:
       place-order:        # per user
         capacity: 10
         refill-tokens: 10
+        refill-period: 1m
+      ai-search:          # per user or IP; every search costs an embedding API call
+        capacity: 20
+        refill-tokens: 20
         refill-period: 1m
   security:
     jwt:

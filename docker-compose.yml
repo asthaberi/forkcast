@@ -48,6 +48,8 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/forkcast?directConnection=true
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-dev-only-forkcast-jwt-secret-change-me-0123456789}
+      # Optional: enables semantic search. Compose reads it from your shell or the git-ignored .env file
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health/readiness"]
       interval: 10s
