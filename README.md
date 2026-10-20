@@ -13,7 +13,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
-| AI | Spring AI 2.0 + Google Gemini embeddings, Redis 8 vector search |
+| AI | Spring AI 2.0 + Google Gemini (embeddings, structured JSON chat output), Redis 8 vector search |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | API docs | springdoc-openapi (OpenAPI 3.1, Swagger UI) |
 | Build & delivery | Maven wrapper, multi-stage Docker image, GitHub Actions → GitHub Container Registry |
@@ -30,7 +30,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 8:** Distributed rate limiting: Redis token buckets in an atomic Lua script ([docs/rate-limiting.md](docs/rate-limiting.md))
 - [x] **Step 9:** OpenAPI/Swagger docs, Docker image, GitHub Actions CI ([docs/delivery.md](docs/delivery.md))
 - [x] **Step 10:** Semantic dish search with Gemini embeddings + Redis vector search, evaluated against BM25 ([docs/semantic-search.md](docs/semantic-search.md))
-- [ ] **Phase 3, AI (rest):** review summarization, personalized recommendations
+- [x] **Step 11:** Verified reviews with atomic ratings, and Gemini review summaries hardened against prompt injection ([docs/reviews.md](docs/reviews.md))
+- [ ] **Step 12:** Personalized recommendations
 
 ## Running locally
 
@@ -60,7 +61,7 @@ paste the token.
 Health check: <http://localhost:8080/actuator/health> (plus `/liveness` and `/readiness`)
 Metrics such as cache hit/miss counts: `/actuator/metrics/cache.gets` *(admin token)*
 
-On first start, 12 sample restaurants around Gwalior, 62 menu items and three demo accounts (admin, the owner of
+On first start, 12 sample restaurants around Gwalior, 62 menu items, 63 reviews and three demo accounts (admin, the owner of
 Dosa Junction, a customer; see [docs/security.md](docs/security.md)) are seeded. `SEED_ENABLED=false` turns it off.
 
 ## API
@@ -172,6 +173,20 @@ curl "localhost:8080/api/v1/search/dishes?q=something+to+cool+me+down+on+a+hot+d
 Needs `GEMINI_API_KEY` (free from [Google AI Studio](https://aistudio.google.com/apikey)) in your environment or
 a `.env` file; without it the endpoint answers `503` and everything else works.
 
+### Reviews
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/v1/orders/{id}/review` | Review a delivered order, once: `{rating: 1-5, text}` *(the customer who ordered)* |
+| `GET` | `/api/v1/restaurants/{id}/reviews?page=0&size=10` | Reviews, newest first |
+| `GET` | `/api/v1/restaurants/{id}/reviews/summary` | Average, star distribution and an AI summary: pros, cons, sentiment, dishes mentioned |
+
+```bash
+curl localhost:8080/api/v1/restaurants/<restaurantId>/reviews/summary
+```
+
+The summary also uses `GEMINI_API_KEY`; without it, a restaurant with no stored summary answers `503`.
+
 ### Errors
 
 Errors use the RFC 9457 Problem Details format:
@@ -183,7 +198,8 @@ Errors use the RFC 9457 Problem Details format:
 
 Rate-limited requests get `429` with `Retry-After`; every `/api` response carries `RateLimit-Limit` / `RateLimit-Remaining`.
 Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MISMATCH`, `ITEM_UNAVAILABLE`,
-`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`, `INVALID_STATUS_TRANSITION`.
+`QUANTITY_LIMIT_EXCEEDED`, `CONCURRENT_MODIFICATION`, `CART_EMPTY`, `RESTAURANT_CLOSED`, `OUT_OF_DELIVERY_RANGE`, `ORDER_NOT_CANCELLABLE`, `INVALID_STATUS_TRANSITION`,
+`REVIEW_NOT_ALLOWED`, `ALREADY_REVIEWED`, `AI_SUMMARY_UNAVAILABLE`.
 
 ## Design notes
 
@@ -207,6 +223,12 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   vector search, with location/veg/price filters inside the KNN query and results read fresh from MongoDB.
   On 20 labelled natural-language queries: **Hit@1 0.95 vs 0.80 and Recall@5 0.98 vs 0.71 for BM25**; the
   minimum score is picked by a threshold sweep ([details](docs/semantic-search.md)).
+- **Reviews and AI summaries:** verified-purchase reviews (unique index per order), ratings updated in one
+  atomic MongoDB pipeline update (20 concurrent reviews → exact average). Gemini summaries are stored and
+  refreshed stale-while-revalidate with single-flight (10 simultaneous requests → 1 LLM call). Prompt-injection
+  defences are layered, model output is validated against the menu, and the numbers always come from the
+  database. Flash-Lite was picked by measurement (2.1 s vs 12.9 s), and a live run caught thinking tokens
+  truncating the JSON ([details](docs/reviews.md)).
 - **Delivery:** layered, non-root Docker image (code changes ship as a <1 MB layer), Compose for the full
   stack, and CI that runs all tests, including Testcontainers, before building and publishing the image
   ([details](docs/delivery.md)).
