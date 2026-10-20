@@ -14,8 +14,12 @@ Metrics (averaged over queries):
   Recall@5      relevant dishes found in the top 5, out of min(#relevant, 5)
   MRR@10        mean reciprocal rank of the first relevant dish in the top 10
 
-Usage (app running with a Gemini key):
-    python benchmark/search_eval.py [--base-url http://localhost:8080] [--json-out results.json]
+--sweep also picks the minimum match score: it fetches scores for the 20 queries plus off-topic queries
+that should return nothing, and reports, per threshold, how many relevant matches survive and how many
+off-topic queries are correctly answered with no results.
+
+Usage (app running with a Gemini key, ideally RATE_LIMIT_ENABLED=false and a low min-similarity for --sweep):
+    python benchmark/search_eval.py [--base-url http://localhost:8080] [--json-out results.json] [--sweep]
 """
 
 import argparse
@@ -54,6 +58,12 @@ QUERIES = {
 }
 
 
+OFF_TOPIC = [
+    "quarterly tax filing", "car insurance renewal", "python programming tutorial", "weather forecast tomorrow",
+    "how to fix a flat tyre", "best smartphone under 20000", "train tickets to delhi", "learn guitar chords",
+]
+
+
 def get_json(url):
     while True:
         try:
@@ -66,9 +76,32 @@ def get_json(url):
             raise
 
 
-def semantic_ranking(base_url, query):
+def semantic_results(base_url, query):
     params = urllib.parse.urlencode({"q": query, "limit": 10})
-    return [result["name"] for result in get_json(f"{base_url}/api/v1/search/dishes?{params}")["results"]]
+    return get_json(f"{base_url}/api/v1/search/dishes?{params}")["results"]
+
+
+def semantic_ranking(base_url, query):
+    return [result["name"] for result in semantic_results(base_url, query)]
+
+
+def sweep(base_url):
+    """Relevant matches kept vs off-topic queries rejected, for each candidate minimum score."""
+    relevant_scores, other_scores = [], []
+    for query, relevant in QUERIES.items():
+        for result in semantic_results(base_url, query):
+            (relevant_scores if result["name"] in relevant else other_scores).append(result["score"])
+    off_topic_top = [max([r["score"] for r in semantic_results(base_url, q)] or [0]) for q in OFF_TOPIC]
+    rows = []
+    for step in range(68, 81):
+        threshold = step / 100
+        rows.append({
+            "threshold": threshold,
+            "relevant_kept": round(sum(s >= threshold for s in relevant_scores) / len(relevant_scores), 3),
+            "other_results_kept": round(sum(s >= threshold for s in other_scores) / len(other_scores), 3),
+            "off_topic_rejected": round(sum(top < threshold for top in off_topic_top) / len(off_topic_top), 3),
+        })
+    return {"relevant_score_min": min(relevant_scores), "off_topic_top_scores": sorted(off_topic_top), "rows": rows}
 
 
 def load_dishes(base_url):
@@ -129,7 +162,21 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://localhost:8080")
     parser.add_argument("--json-out")
+    parser.add_argument("--sweep", action="store_true", help="also sweep the minimum match score")
     args = parser.parse_args()
+
+    if args.sweep:
+        result = sweep(args.base_url)
+        print(f"lowest score of a relevant match: {result['relevant_score_min']}")
+        print(f"top scores for off-topic queries: {result['off_topic_top_scores']}")
+        print("threshold  relevant kept  other results kept  off-topic rejected")
+        for row in result["rows"]:
+            print(f"  {row['threshold']:.2f}       {row['relevant_kept']:.3f}          {row['other_results_kept']:.3f}"
+                  f"              {row['off_topic_rejected']:.3f}")
+        if args.json_out:
+            with open(args.json_out, "w") as file:
+                json.dump(result, file, indent=2)
+        return
 
     dishes = load_dishes(args.base_url)
     missing = {name for names in QUERIES.values() for name in names} - dishes.keys()

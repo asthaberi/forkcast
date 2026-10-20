@@ -1,0 +1,93 @@
+{
+  "relevant_score_min": 0.757,
+  "off_topic_top_scores": [
+    0.722,
+    0.727,
+    0.729,
+    0.732,
+    0.741,
+    0.745,
+    0.746,
+    0.753
+  ],
+  "rows": [
+    {
+      "threshold": 0.68,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.0
+    },
+    {
+      "threshold": 0.69,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.0
+    },
+    {
+      "threshold": 0.7,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.0
+    },
+    {
+      "threshold": 0.71,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.0
+    },
+    {
+      "threshold": 0.72,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.0
+    },
+    {
+      "threshold": 0.73,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.375
+    },
+    {
+      "threshold": 0.74,
+      "relevant_kept": 1.0,
+      "other_results_kept": 1.0,
+      "off_topic_rejected": 0.5
+    },
+    {
+      "threshold": 0.75,
+      "relevant_kept": 1.0,
+      "other_results_kept": 0.986,
+      "off_topic_rejected": 0.875
+    },
+    {
+      "threshold": 0.76,
+      "relevant_kept": 0.984,
+      "other_results_kept": 0.877,
+      "off_topic_rejected": 1.0
+    },
+    {
+      "threshold": 0.77,
+      "relevant_kept": 0.887,
+      "other_results_kept": 0.623,
+      "off_topic_rejected": 1.0
+    },
+    {
+      "threshold": 0.78,
+      "relevant_kept": 0.774,
+      "other_results_kept": 0.355,
+      "off_topic_rejected": 1.0
+    },
+    {
+      "threshold": 0.79,
+      "relevant_kept": 0.581,
+      "other_results_kept": 0.225,
+      "off_topic_rejected": 1.0
+    },
+    {
+      "threshold": 0.8,
+      "relevant_kept": 0.468,
+      "other_results_kept": 0.094,
+      "off_topic_rejected": 1.0
+    }
+  ]
+}

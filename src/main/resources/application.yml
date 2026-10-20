@@ -73,9 +73,10 @@ forkcast:
       key-prefix: "dish:v1:"
       default-limit: 10
       max-limit: 30
-      # Minimum match score. Spring AI's Redis store reports (1 + cosine) / 2, so 0.55 means cosine >= 0.1;
-      # tuned with benchmark/search_eval.py
-      min-similarity: 0.55
+      # Minimum match score, reported as (1 + cosine) / 2. Chosen with `benchmark/search_eval.py --sweep`:
+      # relevant matches scored >= 0.757 and off-topic queries <= 0.753, so 0.75 keeps every relevant match
+      # and returns nothing for 7 of 8 off-topic queries. Re-run the sweep after changing the model or text.
+      min-similarity: 0.75
   rate-limit:
     # false turns all limits off, e.g. for load tests sent from one machine
     enabled: ${RATE_LIMIT_ENABLED:true}

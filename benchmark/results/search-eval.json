@@ -1,0 +1,517 @@
+{
+  "queries": 20,
+  "dishes": 62,
+  "semantic": {
+    "hit@1": 0.95,
+    "hit@3": 1.0,
+    "recall@5": 0.978,
+    "mrr@10": 0.975
+  },
+  "keyword_bm25": {
+    "hit@1": 0.8,
+    "hit@3": 0.8,
+    "recall@5": 0.707,
+    "mrr@10": 0.81
+  },
+  "per_query": [
+    {
+      "query": "something to cool me down on a hot day",
+      "semantic_top3": [
+        "Kesar Lassi",
+        "Rasmalai",
+        "Chocolate Shake"
+      ],
+      "keyword_top3": [
+        "Idli Sambar",
+        "Filter Coffee",
+        "Penne Arrabbiata"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "recall@5": 0.0,
+        "mrr@10": 0.0
+      }
+    },
+    {
+      "query": "light healthy breakfast",
+      "semantic_top3": [
+        "Idli Sambar",
+        "Avocado Toast",
+        "Berry Smoothie Bowl"
+      ],
+      "keyword_top3": [
+        "Idli Sambar",
+        "Avocado Toast",
+        "Grilled Chicken Salad"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.75,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.75,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "really fiery dish for someone who loves heat",
+      "semantic_top3": [
+        "Penne Arrabbiata",
+        "Laal Maas",
+        "Chilli Chicken"
+      ],
+      "keyword_top3": [
+        "Penne Arrabbiata",
+        "Laal Maas",
+        "Mysore Masala Dosa"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.8,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "plant-based meal high in protein",
+      "semantic_top3": [
+        "Quinoa Buddha Bowl",
+        "Tofu Stir Fry Bowl",
+        "Tandoori Soya Chaap"
+      ],
+      "keyword_top3": [
+        "Tandoori Soya Chaap",
+        "Tandoori Chicken (Half)",
+        "Tofu Stir Fry Bowl"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "fish or prawns in a coconut curry",
+      "semantic_top3": [
+        "Prawn Gassi",
+        "Goan Fish Curry",
+        "Kerala Vegetable Stew"
+      ],
+      "keyword_top3": [
+        "Prawn Gassi",
+        "Goan Fish Curry",
+        "Fish Fry"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "late night craving",
+      "semantic_top3": [
+        "Mutton Biryani",
+        "Hyderabadi Chicken Dum Biryani",
+        "Rasmalai"
+      ],
+      "keyword_top3": [
+        "Mutton Biryani",
+        "Hyderabadi Chicken Dum Biryani"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "Italian comfort food",
+      "semantic_top3": [
+        "Tiramisu",
+        "Margherita Pizza",
+        "Dal Makhani"
+      ],
+      "keyword_top3": [
+        "Dal Makhani",
+        "Raj Kachori",
+        "Aloo Tikki Chaat"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.8,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "recall@5": 0.2,
+        "mrr@10": 0.2
+      }
+    },
+    {
+      "query": "snacks you eat standing at a street stall",
+      "semantic_top3": [
+        "Pani Puri",
+        "Raj Kachori",
+        "Aloo Tikki Chaat"
+      ],
+      "keyword_top3": [
+        "Samosa",
+        "Raj Kachori",
+        "Aloo Tikki Chaat"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "dessert flavoured with saffron",
+      "semantic_top3": [
+        "Double Ka Meetha",
+        "Rasmalai",
+        "Kesar Lassi"
+      ],
+      "keyword_top3": [
+        "Rasmalai",
+        "Double Ka Meetha",
+        "Kesar Lassi"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "warm sweet for a cold winter evening",
+      "semantic_top3": [
+        "Gulab Jamun",
+        "Gajar Ka Halwa",
+        "Rasmalai"
+      ],
+      "keyword_top3": [
+        "Gajar Ka Halwa",
+        "Gulab Jamun",
+        "Kesar Lassi"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "chicken cooked in a clay oven",
+      "semantic_top3": [
+        "Tandoori Chicken (Half)",
+        "Butter Chicken",
+        "Murgh Malai Kebab"
+      ],
+      "keyword_top3": [
+        "Tandoori Chicken (Half)",
+        "Hyderabadi Chicken Dum Biryani",
+        "Classic Chicken Burger"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.5,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "mild creamy curry a child would like",
+      "semantic_top3": [
+        "Kerala Vegetable Stew",
+        "Butter Chicken",
+        "Dal Makhani"
+      ],
+      "keyword_top3": [
+        "Murgh Malai Kebab",
+        "Kerala Vegetable Stew",
+        "Butter Chicken"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.75,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "chinese noodles",
+      "semantic_top3": [
+        "Hakka Noodles",
+        "Veg Manchurian",
+        "Prawn Fried Rice"
+      ],
+      "keyword_top3": [
+        "Hakka Noodles",
+        "Prawn Fried Rice",
+        "Veg Manchurian"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "rice slow cooked in a sealed pot",
+      "semantic_top3": [
+        "Dal Makhani",
+        "Hyderabadi Chicken Dum Biryani",
+        "Mutton Biryani"
+      ],
+      "keyword_top3": [
+        "Hyderabadi Chicken Dum Biryani",
+        "Dal Makhani",
+        "Gajar Ka Halwa"
+      ],
+      "semantic": {
+        "hit@1": 0.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 0.5
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.6666666666666666,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "big vegetarian meal with lots of small dishes",
+      "semantic_top3": [
+        "Mini Thali",
+        "Rajasthani Thali",
+        "Dal Baati Churma"
+      ],
+      "keyword_top3": [
+        "Tiramisu",
+        "Kaju Katli (250 g)",
+        "Pepperoni Pizza"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "recall@5": 0.0,
+        "mrr@10": 0.0
+      }
+    },
+    {
+      "query": "something with caffeine",
+      "semantic_top3": [
+        "Filter Coffee",
+        "Tiramisu",
+        "Chocolate Shake"
+      ],
+      "keyword_top3": [
+        "Thai Green Curry with Jasmine Rice",
+        "Medu Vada",
+        "Appam (2 pcs)"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 0.0,
+        "hit@3": 0.0,
+        "recall@5": 0.0,
+        "mrr@10": 0.0
+      }
+    },
+    {
+      "query": "crunchy fried snack",
+      "semantic_top3": [
+        "Samosa",
+        "Peri Peri Fries",
+        "Medu Vada"
+      ],
+      "keyword_top3": [
+        "Samosa",
+        "Chicken 65",
+        "Peri Peri Fries"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.8,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "box of sweets to give as a festival gift",
+      "semantic_top3": [
+        "Kaju Katli (250 g)",
+        "Mini Thali",
+        "Gajar Ka Halwa"
+      ],
+      "keyword_top3": [
+        "Kaju Katli (250 g)",
+        "Tiramisu",
+        "Pepperoni Pizza"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "bread to mop up my curry",
+      "semantic_top3": [
+        "Appam (2 pcs)",
+        "Garlic Naan",
+        "Butter Roti"
+      ],
+      "keyword_top3": [
+        "Appam (2 pcs)",
+        "Chole Bhature",
+        "Garlic Naan"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 0.6666666666666666,
+        "mrr@10": 1.0
+      }
+    },
+    {
+      "query": "vegan fruit breakfast",
+      "semantic_top3": [
+        "Berry Smoothie Bowl",
+        "Avocado Toast",
+        "Tofu Stir Fry Bowl"
+      ],
+      "keyword_top3": [
+        "Berry Smoothie Bowl",
+        "Avocado Toast",
+        "Medu Vada"
+      ],
+      "semantic": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      },
+      "keyword": {
+        "hit@1": 1.0,
+        "hit@3": 1.0,
+        "recall@5": 1.0,
+        "mrr@10": 1.0
+      }
+    }
+  ]
+}
