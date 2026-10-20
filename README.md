@@ -13,7 +13,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Security | Spring Security 7, OAuth2 resource server (JWT, HS256), BCrypt |
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
-| AI | Spring AI 2.0 + Google Gemini (embeddings, structured JSON chat output), Redis 8 vector search |
+| AI | Spring AI 2.0 + Google Gemini (embeddings, structured JSON chat output), Redis 8 vector search, embedding-based recommendations |
 | Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
 | API docs | springdoc-openapi (OpenAPI 3.1, Swagger UI) |
 | Build & delivery | Maven wrapper, multi-stage Docker image, GitHub Actions → GitHub Container Registry |
@@ -31,7 +31,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 9:** OpenAPI/Swagger docs, Docker image, GitHub Actions CI ([docs/delivery.md](docs/delivery.md))
 - [x] **Step 10:** Semantic dish search with Gemini embeddings + Redis vector search, evaluated against BM25 ([docs/semantic-search.md](docs/semantic-search.md))
 - [x] **Step 11:** Verified reviews with atomic ratings, and Gemini review summaries hardened against prompt injection ([docs/reviews.md](docs/reviews.md))
-- [ ] **Step 12:** Personalized recommendations
+- [x] **Step 12:** Personal recommendations from order history and reviews, evaluated offline on real Gemini vectors ([docs/recommendations.md](docs/recommendations.md))
 
 ## Running locally
 
@@ -187,6 +187,18 @@ curl localhost:8080/api/v1/restaurants/<restaurantId>/reviews/summary
 
 The summary also uses `GEMINI_API_KEY`; without it, a restaurant with no stored summary answers `503`.
 
+### Recommendations
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/recommendations?latitude=&longitude=` | *(customer)* `orderAgain` (your favourites) and `forYou` (new dishes, each with a reason); optional `radiusKm`, `openNow`, `limit` |
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "localhost:8080/api/v1/recommendations?latitude=26.2124&longitude=78.1772"
+```
+
+New customers get popular dishes nearby; without a Gemini key (no vector index) everyone does.
+
 ### Errors
 
 Errors use the RFC 9457 Problem Details format:
@@ -229,6 +241,12 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   defences are layered, model output is validated against the menu, and the numbers always come from the
   database. Flash-Lite was picked by measurement (2.1 s vs 12.9 s), and a live run caught thinking tokens
   truncating the JSON ([details](docs/reviews.md)).
+- **Recommendations:** a taste profile from order history (recency half-life, capped quantity) and the
+  customer's own star ratings (bad reviews become dislikes). It's turned into one taste vector from stored
+  Gemini dish vectors and searched with Redis KNN, so no LLM call per request. Each pick is explained ("Because you
+  ordered Medu Vada"), with at most 2 per restaurant and a popularity fallback for new customers. An offline
+  evaluation on recorded real Gemini vectors (260 simulated customers, runs in CI) gives **Recall@10 0.83 vs 0.33 for
+  popularity**, and it overturned my first design ([details](docs/recommendations.md)).
 - **Delivery:** layered, non-root Docker image (code changes ship as a <1 MB layer), Compose for the full
   stack, and CI that runs all tests, including Testcontainers, before building and publishing the image
   ([details](docs/delivery.md)).
