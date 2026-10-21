@@ -77,8 +77,9 @@ every request during an outage would first wait out the 500 ms Redis timeout.
 
 Measured live with Redis stopped: a search took ~1,050 ms on the first request (rate limit and cache both
 timing out), then ~520 ms on later ones, because the rate-limit check was skipped. One warning was logged
-instead of one per request. The remaining 500 ms is the response cache's own Redis timeout. The same
-circuit-breaker idea would remove it, and that's a natural follow-up.
+instead of one per request. The remaining 500 ms was the response cache's own Redis timeout, since removed
+by giving the cache the same breaker (`common/resilience/CircuitBreaker`, now shared by both; see
+[caching.md](caching.md)).
 
 **A bug the breaker test caught:** the first version initialised its "skip until" time to `Long.MIN_VALUE`.
 `System.nanoTime()` values can only be compared by subtraction, and `now - Long.MIN_VALUE` overflows to a

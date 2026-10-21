@@ -5,7 +5,10 @@ import java.util.List;
 
 import com.asthaberi.forkcast.menu.dto.MenuResponse;
 import com.asthaberi.forkcast.restaurant.RestaurantSnapshot;
+import com.asthaberi.forkcast.common.resilience.CircuitBreaker;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -21,6 +24,25 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration
 @EnableCaching
 public class CacheConfig implements CachingConfigurer {
+
+    /** How long Redis is skipped as a cache after a Redis error. */
+    static final Duration SKIP_REDIS_AFTER_FAILURE = Duration.ofSeconds(5);
+
+    private final ObjectProvider<CacheManager> cacheManagers;
+
+    CacheConfig(ObjectProvider<CacheManager> cacheManagers) {
+        this.cacheManagers = cacheManagers;
+    }
+
+    /**
+     * What @Cacheable and @CacheEvict use: Spring Boot's Redis cache manager, with each cache wrapped in a
+     * circuit breaker (see CircuitBreakingCache). Boot's manager stays the bean, so cache metrics still
+     * report on the real Redis caches. Resolved lazily, on first use.
+     */
+    @Override
+    public CacheManager cacheManager() {
+        return new CircuitBreakingCacheManager(cacheManagers::getObject, new CircuitBreaker(SKIP_REDIS_AFTER_FAILURE));
+    }
 
     /**
      * Per-cache TTL and a typed JSON serializer for each cached value. Typed serializers store plain
@@ -42,7 +64,8 @@ public class CacheConfig implements CachingConfigurer {
 
     /**
      * If Redis is down, log and carry on: the cached method runs normally against MongoDB.
-     * The cache is an optimization, so its failure shouldn't take the API down.
+     * The cache is an optimization, so its failure shouldn't take the API down. (And thanks to the circuit
+     * breaker, only the first request of an outage waits for the Redis timeout.)
      */
     @Override
     public CacheErrorHandler errorHandler() {

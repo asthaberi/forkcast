@@ -8,6 +8,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.function.LongSupplier;
 
+import com.asthaberi.forkcast.common.resilience.CircuitBreaker;
 import com.asthaberi.forkcast.ratelimit.RateLimitProperties.Policy;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +38,7 @@ public class RedisRateLimiter implements RateLimiter {
     private final StringRedisTemplate redisTemplate;
     private final RateLimitProperties properties;
     private final MeterRegistry meterRegistry;
-    private final LongSupplier nanoClock;
-    // nanoTime values can only be compared by subtraction, so this starts at "now" (already expired),
-    // never at a sentinel like Long.MIN_VALUE, where the subtraction would overflow
-    private volatile long skipRedisUntil;
+    private final CircuitBreaker breaker;
 
     public RedisRateLimiter(StringRedisTemplate redisTemplate, RateLimitProperties properties,
                             MeterRegistry meterRegistry) {
@@ -52,14 +50,13 @@ public class RedisRateLimiter implements RateLimiter {
         this.redisTemplate = redisTemplate;
         this.properties = properties;
         this.meterRegistry = meterRegistry;
-        this.nanoClock = nanoClock;
-        this.skipRedisUntil = nanoClock.getAsLong();
+        this.breaker = new CircuitBreaker(SKIP_AFTER_FAILURE, nanoClock);
     }
 
     @Override
     public RateLimitDecision tryConsume(String policyName, String key) {
         Policy policy = properties.policy(policyName);
-        if (nanoClock.getAsLong() - skipRedisUntil < 0) {
+        if (breaker.isOpen()) {
             count(policyName, "skipped");
             return RateLimitDecision.unlimited();
         }
@@ -74,7 +71,7 @@ public class RedisRateLimiter implements RateLimiter {
             return decision;
         } catch (RuntimeException e) {
             count(policyName, "error");
-            skipRedisUntil = nanoClock.getAsLong() + SKIP_AFTER_FAILURE.toNanos();
+            breaker.recordFailure();
             log.warn("Rate limit check '{}' failed; allowing requests without limits for {} s: {}",
                     policyName, SKIP_AFTER_FAILURE.toSeconds(), e.toString());
             return RateLimitDecision.unlimited();

@@ -29,7 +29,28 @@ Entries are readable JSON in `redis-cli`, contain no Java class names, and don't
 
 **The cache must never take the API down.** Redis timeouts are 500 ms, and a `LoggingCacheErrorHandler`
 turns cache errors into warnings, so requests fall through to MongoDB. Verified by stopping the Redis
-container during a run: both endpoints kept answering `200` (~0.5 s each, the timeout).
+container during a run: both endpoints kept answering `200`.
+
+**...and an outage shouldn't make every request slow either.** Falling back alone still cost every request
+the Redis timeout. Each cache is therefore wrapped in a **circuit breaker** (`CircuitBreakingCache`): after a
+Redis error, the caches skip Redis for 5 seconds, so reads are misses and writes are skipped, and then one
+request tries Redis again. The wrapper is applied where the caching annotations get their cache manager
+(`CachingConfigurer.cacheManager()`), so Boot's Redis cache manager and its metrics are unchanged.
+
+Measured with Redis paused (unreachable) and with Redis stopped, 20 requests per endpoint:
+
+| | Menu, median | Nearby search, median |
+|---|---|---|
+| Redis up | 16 ms | 20 ms |
+| Redis down, without the breaker | 533 ms | 534 ms |
+| **Redis down, with the breaker** | **20 ms** | **16 ms** |
+
+Only the first request of each 5-second window still waits (up to ~1 s for a read plus a write).
+
+**Evictions during an outage.** A menu edited while Redis is down can't be evicted, so after the outage
+Redis would still hold the old menu, possibly for its full 30-minute TTL. The wrapper remembers any eviction
+it skipped or that failed, and **clears that cache** before using it again. A cleared cache only costs some
+misses; a stale menu would show wrong prices.
 
 **Separate bean for the cached lookup.** `@Cacheable` works through a Spring proxy, so a call from
 `RestaurantService` to its own method would skip the cache. The lookup therefore lives in
@@ -45,8 +66,9 @@ container during a run: both endpoints kept answering `200` (~0.5 s each, the ti
   why the cold-cache runs below show 870–885 commands instead of a fixed number. `@Cacheable(sync = true)`
   would fix it, but `RedisCache` implements it with one lock per cache, which would serialize *all*
   misses. Per-key request coalescing is a possible later improvement.
-- **Redis outage cost.** During an outage every request pays the 500 ms timeout. A circuit breaker
-  (e.g. Resilience4j) would skip Redis entirely while it's down.
+- **Redis outage cost.** Was: every request paid the 500 ms timeout. Fixed with the circuit breaker above.
+  It's deliberately simple (one failure opens it for a fixed 5 s) rather than a library like Resilience4j,
+  because the fallback is cheap and the same small class also protects the rate limiter.
 
 ## Benchmark
 

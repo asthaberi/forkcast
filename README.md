@@ -220,8 +220,9 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
 - **Layers:** controller → service → repository, with request/response DTOs kept separate from the MongoDB document.
 - **Caching:** menus and nearby search are cached in Redis. Search is keyed by ~150 m geohash cell so
   nearby users share entries, while distance and open-now are still computed per request. Menu writes
-  evict the cache, and a Redis outage falls back to MongoDB instead of failing. Benchmark: **72.7% fewer
-  MongoDB queries from a cold cache, 100% at steady state** ([details](docs/caching.md)).
+  evict the cache, and a Redis outage falls back to MongoDB instead of failing. A circuit breaker keeps an
+  outage fast (**533 ms → 20 ms median**), and evictions missed during it are made up afterwards. Benchmark:
+  **72.7% fewer MongoDB queries from a cold cache, 100% at steady state** ([details](docs/caching.md)).
 - **Cart concurrency:** optimistic locking (`@Version`) with re-read-and-retry. Fired 20 simultaneous adds at one
   cart: without it, 86 of 100 "successful" adds were silently lost; with it, zero ([details](docs/cart.md)).
 - **Checkout** creates the order and empties the cart in one MongoDB transaction, is idempotent via an
