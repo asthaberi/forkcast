@@ -17,10 +17,19 @@ permissions:
 jobs:
   test:
     name: Build and test
-    runs-on: ubuntu-latest
+    # Temporarily on Ubuntu 22.04 (Linux 6.8): the 24.04 image moved to Linux 7.0, where MongoDB 8.0.34 refuses
+    # to start (SERVER-121912; its kernel check misreads Ubuntu's version, SERVER-131779). Back to ubuntu-latest
+    # once the mongo:8.0 image has the fix (8.0.35+), which the "MongoDB on the newest runner" job below shows.
+    # 22.04 brownouts start March 2027 (actions/runner-images#14254).
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+
+      # Fails in seconds with MongoDB's own error if it can't start here, instead of every
+      # integration test class timing out with the reason buried in the log
+      - name: Check MongoDB starts on this runner
+        run: .github/scripts/check-mongo-starts.sh
 
       - uses: actions/setup-java@v6
         with:
@@ -47,6 +56,22 @@ jobs:
         with:
           name: openapi
           path: target/openapi.json
+
+  # Doesn't block anything: shows whether the tests could move back to the newest runner image.
+  # Red while MongoDB can't start on its kernel; once green, set the test job back to ubuntu-latest.
+  mongo-canary:
+    name: MongoDB on the newest runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      # While GitHub rolls out a new image, a run can still land on the old one: green only counts
+      # on a kernel of 6.19 or newer
+      - name: Check MongoDB starts on this runner
+        run: |
+          echo "::notice title=Runner kernel::$(uname -r)"
+          .github/scripts/check-mongo-starts.sh
 
   image:
     name: Docker image

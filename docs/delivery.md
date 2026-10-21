@@ -72,11 +72,14 @@ local use.
 
 On every push to `main`, every pull request, and on demand:
 
-1. **Build and test**: JDK 21 with a cached Maven repository, then `./mvnw -B verify`. That runs all unit,
+1. **Build and test** (on Ubuntu 22.04 for now; see below): a 5-second check that MongoDB can start on the
+   runner, then JDK 21 with a cached Maven repository, then `./mvnw -B verify`. That runs all unit,
    web-slice and integration tests. The integration tests start real MongoDB (replica set) and Redis
    containers via Testcontainers on the runner's Docker engine. Test reports are uploaded if something
    fails, and the OpenAPI spec is uploaded every time.
-2. **Docker image**, only if tests pass: built with Buildx, with layers cached in GitHub's Actions cache.
+2. **MongoDB on the newest runner** (doesn't block anything): the same MongoDB check on `ubuntu-latest`,
+   to show when the tests can move back there.
+3. **Docker image**, only if tests pass: built with Buildx, with layers cached in GitHub's Actions cache.
    On `main` it's pushed to GitHub Container Registry as `ghcr.io/asthaberi/forkcast:latest` and
    `:sha-<commit>`. Pull requests only check that the image builds.
 
@@ -92,3 +95,39 @@ without their own Redis. Locally a development Redis was always running, so thes
 depended on it, and the app itself couldn't start when Redis was down. Both are fixed; see
 [order-tracking.md](order-tracking.md#startup-without-redis-a-bug-found-by-ci). This is why CI runs on a
 clean machine: it catches what an always-on local environment hides.
+
+### MongoDB stopped starting on GitHub's new runner image
+
+On 21 October 2026, every integration test class failed on CI after ~60 s, while all 199 tests passed
+locally. A re-run passed. Investigation:
+
+1. **The failure:** Testcontainers' "Log output from the failed container" had MongoDB's own reason:
+   `"id":12257600 … MongoDB cannot start: Linux kernel versions 6.19 and newer has a known incompatibility
+   with this version of MongoDB` (SERVER-121912).
+2. **Why it was intermittent:** the failed run was on runner image `20261018`, the passing re-run on
+   `20261012`. The only relevant change between them was the **kernel: 6.17 → 7.0**. GitHub was rolling the
+   new image out gradually, so each run was a coin toss.
+3. **Not our code or the MongoDB image:** the `mongo:8.0` digest was the same in both runs, and locally.
+4. **Reproduced locally:** a small preload library makes `uname()` report the runner's kernel
+   (`7.0.0-1017-azure`). With it, MongoDB 8.0.34 fails with exactly the same fatal error; without it, it
+   starts. Disabling the feature the check protects (`GLIBC_TUNABLES=glibc.pthread.rseq=0`) doesn't help: it's
+   a plain version check, with no override.
+5. **Upstream status:** reported to GitHub (actions/runner-images#15005). Their analysis: this kernel
+   already contains the upstream fix, but MongoDB reads Ubuntu's version string instead of the upstream one
+   (SERVER-131779). Fixed in MongoDB **8.0.35**, which isn't released yet. MongoDB 8.0.32 has the same check,
+   so pinning an older patch isn't a way out either.
+
+**What changed in CI:**
+
+- The test job runs on **`ubuntu-22.04`** (kernel 6.8) until `mongo:8.0` has the fix. 22.04's deprecation
+  brownouts only start in March 2027.
+- **`check-mongo-starts.sh`** runs before the tests. If MongoDB can't start, the job fails in seconds with
+  MongoDB's own message as an error annotation, not after 8 test classes × 60 s with the cause in the log.
+- A **canary job** runs the same check on `ubuntu-latest` without blocking the build, so CI itself shows
+  when it's safe to move back. It prints the runner's kernel, because during a rollout a green result on
+  an old kernel proves nothing.
+- The test container images are defined once (`TestContainers`), so moving to 8.0.35 is a one-line change.
+
+Moving to MongoDB 9.0, which has the fix, was ruled out: a major-version upgrade isn't something to do
+just to fix CI. The same check would also stop MongoDB 8.0.34 in `docker-compose.yml` on a Linux machine
+with kernel 6.19+. Docker Desktop's kernel is 6.6, so it isn't affected.
