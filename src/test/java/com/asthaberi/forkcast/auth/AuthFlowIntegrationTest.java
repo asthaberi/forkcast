@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.asthaberi.forkcast.menu.MenuItemRepository;
 import com.asthaberi.forkcast.restaurant.RestaurantRepository;
+import com.asthaberi.forkcast.support.TestContainers;
 import com.asthaberi.forkcast.user.Role;
 import com.asthaberi.forkcast.user.User;
 import com.asthaberi.forkcast.user.UserRepository;
@@ -51,7 +52,7 @@ class AuthFlowIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     private static final String PASSWORD = "correct-horse-battery";
 

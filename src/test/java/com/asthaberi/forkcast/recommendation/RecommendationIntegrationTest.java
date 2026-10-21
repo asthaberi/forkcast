@@ -23,6 +23,7 @@ import com.asthaberi.forkcast.review.Review;
 import com.asthaberi.forkcast.review.ReviewRepository;
 import com.asthaberi.forkcast.search.DishVectorIndex;
 import com.asthaberi.forkcast.search.GeminiFixtureEmbeddingModel;
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -47,11 +48,11 @@ class RecommendationIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     @Container
     @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     private static final Set<String> SOUTH_INDIAN = Set.of("Mysore Masala Dosa", "Medu Vada", "Filter Coffee",
             "Kerala Vegetable Stew", "Appam (2 pcs)");

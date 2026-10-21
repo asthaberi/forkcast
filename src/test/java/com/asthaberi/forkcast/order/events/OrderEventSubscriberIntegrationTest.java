@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.asthaberi.forkcast.order.OrderStatus;
+import com.asthaberi.forkcast.support.TestContainers;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ import tools.jackson.databind.json.JsonMapper;
 class OrderEventSubscriberIntegrationTest {
 
     @Container
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
 

@@ -25,6 +25,7 @@ import com.asthaberi.forkcast.menu.MenuItemRepository;
 import com.asthaberi.forkcast.menu.SpiceLevel;
 import com.asthaberi.forkcast.restaurant.Restaurant;
 import com.asthaberi.forkcast.restaurant.RestaurantRepository;
+import com.asthaberi.forkcast.support.TestContainers;
 import com.asthaberi.forkcast.user.Role;
 import com.asthaberi.forkcast.user.User;
 import com.asthaberi.forkcast.user.UserRepository;
@@ -56,11 +57,11 @@ class OrderTrackingIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     @Container
     @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     private static final String PASSWORD = "integration-password";
     private static final Duration WAIT = Duration.ofSeconds(10);

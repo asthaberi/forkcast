@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,11 +31,11 @@ class RateLimitHttpIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     @Container
     @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     @Autowired
     private MockMvc mockMvc;

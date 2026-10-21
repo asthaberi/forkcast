@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.asthaberi.forkcast.ratelimit.RateLimitProperties.Policy;
+import com.asthaberi.forkcast.support.TestContainers;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class RedisRateLimiterIntegrationTest {
 
     @Container
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     private static final RateLimitProperties PROPERTIES = new RateLimitProperties(true, Map.of(
             "burst", new Policy(5, 5, Duration.ofMinutes(1)),

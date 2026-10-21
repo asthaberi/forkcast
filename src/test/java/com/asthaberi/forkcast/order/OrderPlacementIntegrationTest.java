@@ -27,6 +27,7 @@ import com.asthaberi.forkcast.order.OrderService.OrderPlacement;
 import com.asthaberi.forkcast.order.dto.PlaceOrderRequest;
 import com.asthaberi.forkcast.restaurant.Restaurant;
 import com.asthaberi.forkcast.restaurant.RestaurantRepository;
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,7 @@ class OrderPlacementIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     private static final String USER = "integration-user";
     private static final PlaceOrderRequest TO_HOSTEL =

@@ -30,6 +30,7 @@ import com.asthaberi.forkcast.recommendation.dto.RecommendationsResponse.Recomme
 import com.asthaberi.forkcast.search.DishVectorIndex;
 import com.asthaberi.forkcast.search.DishVectorIndex.Neighbour;
 import com.asthaberi.forkcast.search.GeminiFixtureEmbeddingModel;
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -66,11 +67,11 @@ class RecommendationEvaluationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     @Container
     @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     private static final int K = 10;
     private static final int CUSTOMERS_PER_PERSONA = 20;

@@ -20,6 +20,7 @@ import com.asthaberi.forkcast.restaurant.Restaurant;
 import com.asthaberi.forkcast.restaurant.RestaurantRepository;
 import com.asthaberi.forkcast.search.dto.DishSearchResponse;
 import com.asthaberi.forkcast.search.dto.DishSearchResponse.DishResult;
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -44,11 +45,11 @@ class DishSearchIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     @Container
     @ServiceConnection(name = "redis")
-    static GenericContainer<?> redis = new GenericContainer<>("redis:8.2").withExposedPorts(6379);
+    static GenericContainer<?> redis = TestContainers.redis();
 
     // Gwalior city centre, where the seeded restaurants are
     private static final double LAT = 26.2124;

@@ -43,6 +43,7 @@ import com.asthaberi.forkcast.review.summary.ReviewSummarizer;
 import com.asthaberi.forkcast.review.summary.ReviewSummaryDraft;
 import com.asthaberi.forkcast.review.summary.ReviewSummaryDraft.Sentiment;
 import com.asthaberi.forkcast.review.summary.ReviewSummaryService;
+import com.asthaberi.forkcast.support.TestContainers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ class ReviewIntegrationTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:8.0").withReplicaSet();
+    static MongoDBContainer mongo = TestContainers.mongo();
 
     private static final ReviewSummaryDraft DRAFT = new ReviewSummaryDraft("Crisp dosas and good coffee.",
             List.of("Crisp dosa"), List.of("Slow delivery"), Sentiment.POSITIVE, List.of("masala dosa", "Dim Sum"));
