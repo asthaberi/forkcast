@@ -173,8 +173,13 @@ class RecommendationEvaluationTest {
         }
 
         Map<String, Function<Customer, List<String>>> strategies = new LinkedHashMap<>();
-        strategies.put(PRODUCTION, customer -> recommendations
-                .recommend(customer.userId(), everywhere(K)).forYou().stream().map(RecommendedDish::name).toList());
+        List<ScoredPick> tasteMatches = new ArrayList<>();
+        strategies.put(PRODUCTION, customer -> {
+            List<RecommendedDish> forYou = recommendations.recommend(customer.userId(), everywhere(K)).forYou();
+            forYou.stream().filter(dish -> dish.score() != null).forEach(dish -> tasteMatches.add(
+                    new ScoredPick(dish.score(), customer.allRelevant().contains(dish.name()))));
+            return forYou.stream().map(RecommendedDish::name).toList();
+        });
         strategies.put("One search per liked dish (best score)", this::searchPerLikedDish);
         strategies.put("Popular", this::popular);
         strategies.put("Random", customer -> randomPicks(customer, new Random(customer.userId().hashCode())));
@@ -186,7 +191,7 @@ class RecommendationEvaluationTest {
             results.put(name, scores);
         });
 
-        String report = report(results, customers.size());
+        String report = report(results, customers.size()) + scoreBands(tasteMatches, results.get("Popular"));
         System.out.println(report);
         Files.writeString(Path.of("target", "recommendation-eval.md"), report);
 
@@ -268,8 +273,35 @@ class RecommendationEvaluationTest {
         return out.toString();
     }
 
+    /**
+     * Would a minimum score help? Only if weak taste matches are less often relevant than the popular dishes
+     * that would replace them.
+     */
+    private static String scoreBands(List<ScoredPick> picks, Scores popular) {
+        double[] bounds = {0.0, 0.65, 0.70, 0.75, 0.80, 1.01};
+        StringBuilder out = new StringBuilder(String.format(Locale.ROOT,
+                "%nHow often a taste match is relevant, by its score (popular dishes: %.0f%% of picks relevant)%n%n"
+                        + "| Score | Picks | Relevant |%n|---|---|---|%n", 100 * popular.relevantShare()));
+        for (int i = 0; i < bounds.length - 1; i++) {
+            double low = bounds[i];
+            double high = bounds[i + 1];
+            List<ScoredPick> band = picks.stream().filter(pick -> pick.score() >= low && pick.score() < high).toList();
+            out.append(String.format(Locale.ROOT, "| %s | %d | %.0f%% |%n",
+                    i == 0 ? "below " + high : i == bounds.length - 2 ? low + " and above" : low + " to " + high,
+                    band.size(), band.isEmpty() ? 0 : 100.0 * band.stream().filter(ScoredPick::relevant).count() / band.size()));
+        }
+        return out.toString();
+    }
+
+    private record ScoredPick(double score, boolean relevant) {
+    }
+
     /** @param relevant per taste group, the group's dishes the customer hasn't ordered */
     private record Customer(String userId, List<String> persona, Map<String, Set<String>> relevant) {
+
+        Set<String> allRelevant() {
+            return relevant.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+        }
     }
 
     private static final class Scores {
@@ -277,10 +309,14 @@ class RecommendationEvaluationTest {
         private final List<Double> recallMulti = new ArrayList<>();
         private final List<Double> precision = new ArrayList<>();
         private final List<Double> both = new ArrayList<>();
+        private int picks;
+        private int relevantPicks;
 
         void add(Customer customer, List<String> recommended) {
-            Set<String> relevant = customer.relevant().values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+            Set<String> relevant = customer.allRelevant();
             long hits = recommended.stream().filter(relevant::contains).count();
+            picks += recommended.size();
+            relevantPicks += (int) hits;
             (customer.persona().size() == 1 ? recallSingle : recallMulti).add((double) hits / relevant.size());
             precision.add(recommended.stream().limit(5).filter(relevant::contains).count() / 5.0);
             if (customer.persona().size() > 1) {
@@ -292,6 +328,10 @@ class RecommendationEvaluationTest {
 
         double recall(boolean twoTastes) {
             return mean(twoTastes ? recallMulti : recallSingle);
+        }
+
+        double relevantShare() {
+            return picks == 0 ? 0 : (double) relevantPicks / picks;
         }
 
         double precisionAt5() {

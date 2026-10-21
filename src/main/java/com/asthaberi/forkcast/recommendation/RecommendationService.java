@@ -53,10 +53,15 @@ public class RecommendationService {
 
     static final int SEEDS = 5;
     static final int NEIGHBOURS = 40;
+    // Below this score a pick is rarely what the customer would choose (2-7% in RecommendationEvaluationTest,
+    // against 54-93% above it). Weak picks are still shown, since the alternatives measured worse, but they
+    // aren't presented as "because you ordered X".
+    static final double STRONG_MATCH = 0.75;
     static final int MAX_PER_RESTAURANT = 2;
     static final int ORDER_AGAIN_LIMIT = 5;
     private static final int TOP_RATED_RESTAURANTS = 5;
     private static final String MATCHES_YOUR_TASTE = "Matches your taste";
+    private static final String SOMETHING_DIFFERENT = "Something different to try";
 
     private final RestaurantService restaurantService;
     private final TasteProfiles tasteProfiles;
@@ -124,7 +129,10 @@ public class RecommendationService {
         }
     }
 
-    /** "Because you ordered X": for each personal pick, the liked dish whose vector is closest to it. */
+    /**
+     * "Because you ordered X": for each strong personal pick, the liked dish whose vector is closest to it.
+     * Weak picks get a reason that doesn't overclaim.
+     */
     private List<RecommendedDish> explain(List<RecommendedDish> dishes, TasteMatch match) {
         List<String> personal = dishes.stream().filter(dish -> dish.score() != null)
                 .map(RecommendedDish::menuItemId).toList();
@@ -137,6 +145,9 @@ public class RecommendationService {
                 float[] vector = vectors.get(dish.menuItemId());
                 if (dish.score() == null || vector == null) {
                     return dish;
+                }
+                if (dish.score() < STRONG_MATCH) {
+                    return dish.withReason(SOMETHING_DIFFERENT);
                 }
                 return match.seeds().stream()
                         .filter(seed -> match.seedVectors().containsKey(seed.menuItemId()))

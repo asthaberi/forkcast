@@ -143,6 +143,34 @@ finding each pick's closest liked dish afterwards.
 - 62 dishes is a small catalogue; with thousands, the 2-per-restaurant cap and the KNN size would need
   revisiting.
 
+### Should weak matches be cut off? Measured: no
+
+In the live check, the 10th pick for one customer was a Crispy Veg Burger at score 0.64, explained as
+"Because you ordered Masala Dosa". A minimum score looked like the obvious fix, so the evaluation now also
+reports how often a taste match is relevant at each score:
+
+| Score | Picks | Relevant |
+|---|---|---|
+| 0.65 to 0.70 | 315 | 2% |
+| 0.70 to 0.75 | 1,095 | 7% |
+| 0.75 to 0.80 | 776 | 54% |
+| 0.80 and above | 414 | 93% |
+
+On their own, matches below 0.75 look worse than popular dishes (13% of popular picks are relevant). But
+cutting them off made the end-to-end result **worse**:
+
+| Cutoff | Recall@10, one taste | Recall@10, two tastes | Precision@5 |
+|---|---|---|---|
+| none | **0.83** | 0.57 | 0.58 |
+| 0.72 | 0.81 | 0.58 | 0.58 |
+| 0.75 | 0.79 | 0.56 | 0.58 |
+| 0.78 | 0.73 | 0.47 | 0.50 |
+
+The popular dishes that would replace a customer's weak matches are, for that customer, even less relevant.
+The most popular ones are often already ordered, already in the list or blocked by the 2-per-restaurant rule.
+So there's no cutoff. The real problem was the explanation, which overclaimed: picks below 0.75 now say
+**"Something different to try"**, and only stronger ones say "Because you ordered X".
+
 ## Tests
 
 - `TasteProfileTest`: recency half-life, review factors, dislikes, quantity cap, the vegetarian-only rule.
@@ -154,6 +182,5 @@ finding each pick's closest liked dish afterwards.
 
 ## Next steps
 
-- A minimum similarity for taste matches, so weak matches (the 10th pick at ~0.64) give way to popular dishes.
 - Cache the taste vector per customer (invalidated by a new order or review) to skip rebuilding the profile.
 - Use time of day (breakfast vs dinner) and price range as signals.

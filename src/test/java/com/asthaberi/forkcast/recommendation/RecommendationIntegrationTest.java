@@ -129,6 +129,9 @@ class RecommendationIntegrationTest {
         assertThat(SOUTH_INDIAN).contains(first.name());
         assertThat(first.reason()).isIn("Because you ordered Masala Dosa", "Because you ordered Idli Sambar");
         assertThat(first.score()).isNotNull();
+        // Weak matches don't claim to be "because you ordered" something
+        assertThat(response.forYou()).allSatisfy(dish -> assertThat(dish.reason()).startsWith(
+                dish.score() < RecommendationService.STRONG_MATCH ? "Something different to try" : "Because you ordered"));
         assertAtMostTwoPerRestaurant(response.forYou());
     }
 
