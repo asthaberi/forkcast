@@ -28,10 +28,18 @@ production.
 
 Multi-stage `Dockerfile`:
 
-1. **Build stage** (`eclipse-temurin:21-jdk`): copies `pom.xml` and the Maven wrapper first and
-   downloads dependencies, then copies `src/` and packages. Dependencies are re-downloaded only when
-   `pom.xml` changes, and a BuildKit cache mount keeps `~/.m2` between builds without putting it in an
+1. **Build stage** (`eclipse-temurin:21-jdk`): first the Maven wrapper downloads Maven itself, then
+   `pom.xml` is copied and dependencies are downloaded, then `src/` is copied and packaged. Each step is its
+   own layer, so Maven is re-downloaded only when the wrapper version changes, dependencies only when
+   `pom.xml` changes. A BuildKit cache mount keeps `~/.m2` between local builds without putting it in an
    image layer.
+
+   Maven lives in `/opt/maven` (`MAVEN_USER_HOME`), not in `~/.m2`. **Found when a CI build failed:** the
+   wrapper had put Maven in `~/.m2/wrapper`, inside the cache mount, and GitHub's layer cache doesn't keep
+   cache mounts. So every CI image build downloaded Maven again, even when every other layer was cached,
+   and one network hiccup doing so failed the build. Now it's an ordinary layer, which the cache keeps, and
+   the download is retried up to 5 times. Checked by running the wrapper inside the build stage with
+   networking turned off.
 2. **Runtime stage** (`eclipse-temurin:21-jre`): only the JRE and the app, without the JDK, Maven or source.
 
 | Practice | Why |

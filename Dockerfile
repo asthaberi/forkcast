@@ -4,10 +4,17 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 
-# Dependencies first: this layer is only rebuilt when pom.xml changes, not on every code change.
-# The cache mount keeps ~/.m2 between builds without baking it into an image layer.
-COPY mvnw pom.xml ./
+# Maven itself, in its own layer, so the layer cache keeps it until the wrapper version changes. (Left in
+# ~/.m2, it lived in the cache mount below, which CI's layer cache doesn't keep, so every CI build downloaded
+# Maven again, and one network hiccup doing so failed a build.) Retried for the same reason.
+ENV MAVEN_USER_HOME=/opt/maven
+COPY mvnw ./
 COPY .mvn .mvn
+RUN for attempt in 1 2 3 4 5; do ./mvnw -q --version > /dev/null && exit 0; sleep $((attempt * 5)); done; exit 1
+
+# Dependencies next: this layer is only rebuilt when pom.xml changes, not on every code change.
+# The cache mount keeps ~/.m2 between local builds without baking it into an image layer.
+COPY pom.xml ./
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q dependency:go-offline
 
 COPY src src
