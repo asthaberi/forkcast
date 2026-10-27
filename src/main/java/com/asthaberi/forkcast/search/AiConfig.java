@@ -1,6 +1,9 @@
 package com.asthaberi.forkcast.search;
 
 import com.google.genai.Client;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
+import org.springframework.ai.chat.observation.ChatModelMeterObservationHandler;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
@@ -10,6 +13,7 @@ import org.springframework.ai.google.genai.embedding.GoogleGenAiEmbeddingConnect
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingModel;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingOptions;
 import org.springframework.ai.google.genai.text.GoogleGenAiTextEmbeddingOptions.TaskType;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDetails;
 import org.springframework.context.annotation.Bean;
@@ -28,13 +32,16 @@ public class AiConfig {
 
     @Bean
     @ConditionalOnExpression("!'${forkcast.ai.gemini.api-key:}'.isBlank()")
-    EmbeddingModel dishEmbeddingModel(GeminiProperties gemini) {
+    EmbeddingModel dishEmbeddingModel(GeminiProperties gemini, ObservationRegistry observations) {
         GoogleGenAiEmbeddingConnectionDetails connection = GoogleGenAiEmbeddingConnectionDetails.builder()
                 .apiKey(gemini.apiKey())
                 .build();
+        // Same retries as the shorter constructor, plus observations: every Gemini call becomes a timed metric
         return new RetrievalEmbeddingModel(
-                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_DOCUMENT)),
-                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_QUERY)),
+                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_DOCUMENT),
+                        RetryUtils.DEFAULT_RETRY_TEMPLATE, observations),
+                new GoogleGenAiTextEmbeddingModel(connection, options(gemini, TaskType.RETRIEVAL_QUERY),
+                        RetryUtils.DEFAULT_RETRY_TEMPLATE, observations),
                 gemini.dimensions());
     }
 
@@ -47,8 +54,9 @@ public class AiConfig {
      */
     @Bean
     @ConditionalOnExpression("!'${forkcast.ai.gemini.api-key:}'.isBlank()")
-    ChatModel reviewChatModel(GeminiProperties gemini) {
+    ChatModel reviewChatModel(GeminiProperties gemini, ObservationRegistry observations) {
         return GoogleGenAiChatModel.builder()
+                .observationRegistry(observations)
                 .genAiClient(Client.builder().apiKey(gemini.apiKey()).build())
                 .options(GoogleGenAiChatOptions.builder()
                         .model(gemini.chatModel())
@@ -58,6 +66,16 @@ public class AiConfig {
                         .responseMimeType("application/json")
                         .build())
                 .build();
+    }
+
+    /**
+     * Turns chat observations into token-usage counters (gen_ai.client.token.usage, by model and input/output),
+     * next to the call-duration timer (gen_ai.client.operation) that every observation already produces.
+     * Spring AI's starters would register this; the plain libraries used here don't.
+     */
+    @Bean
+    ChatModelMeterObservationHandler chatModelTokenMetrics(MeterRegistry meterRegistry) {
+        return new ChatModelMeterObservationHandler(meterRegistry);
     }
 
     /**

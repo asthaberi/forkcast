@@ -6,6 +6,7 @@ import java.util.List;
 import com.asthaberi.forkcast.menu.dto.MenuResponse;
 import com.asthaberi.forkcast.restaurant.RestaurantSnapshot;
 import com.asthaberi.forkcast.common.resilience.CircuitBreaker;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.CacheManager;
@@ -29,9 +30,11 @@ public class CacheConfig implements CachingConfigurer {
     static final Duration SKIP_REDIS_AFTER_FAILURE = Duration.ofSeconds(5);
 
     private final ObjectProvider<CacheManager> cacheManagers;
+    private final ObjectProvider<MeterRegistry> meterRegistries;
 
-    CacheConfig(ObjectProvider<CacheManager> cacheManagers) {
+    CacheConfig(ObjectProvider<CacheManager> cacheManagers, ObjectProvider<MeterRegistry> meterRegistries) {
         this.cacheManagers = cacheManagers;
+        this.meterRegistries = meterRegistries;
     }
 
     /**
@@ -41,7 +44,9 @@ public class CacheConfig implements CachingConfigurer {
      */
     @Override
     public CacheManager cacheManager() {
-        return new CircuitBreakingCacheManager(cacheManagers::getObject, new CircuitBreaker(SKIP_REDIS_AFTER_FAILURE));
+        CircuitBreaker breaker = new CircuitBreaker(SKIP_REDIS_AFTER_FAILURE);
+        meterRegistries.ifAvailable(registry -> breaker.withMetrics(registry, "redis-cache"));
+        return new CircuitBreakingCacheManager(cacheManagers::getObject, breaker);
     }
 
     /**

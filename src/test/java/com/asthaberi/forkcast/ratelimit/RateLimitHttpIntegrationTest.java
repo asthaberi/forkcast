@@ -87,7 +87,7 @@ class RateLimitHttpIntegrationTest {
                 .andExpect(header().exists("Retry-After"))
                 .andExpect(jsonPath("$.title").value("Too many requests"));
         // Health checks aren't API traffic and stay reachable
-        mockMvc.perform(get("/actuator/health").with(fromIp(ip))).andExpect(status().isOk());
+        mockMvc.perform(get("/readyz").with(fromIp(ip))).andExpect(status().isOk());
     }
 
     private static MockHttpServletRequestBuilder login(String email) {

@@ -65,7 +65,7 @@ The `app` service sits behind a Compose **profile**, so plain `docker compose up
 MongoDB and Redis for running the app from an IDE. In the container the app reaches its dependencies
 by service name (`mongodb`, `redis`): inside a container, `localhost` is the container itself. Compose waits for
 MongoDB to be healthy before starting the app, and checks the app itself through
-`/actuator/health/readiness`. Set `JWT_SECRET` in the environment or a `.env` file for anything beyond
+`/readyz`. Set `JWT_SECRET` in the environment or a `.env` file for anything beyond
 local use.
 
 ## CI: GitHub Actions (`.github/workflows/ci.yml`)

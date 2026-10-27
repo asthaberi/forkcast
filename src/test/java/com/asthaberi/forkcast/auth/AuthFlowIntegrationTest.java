@@ -179,15 +179,6 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.itemCount").value(2));
     }
 
-    @Test
-    void metricsNeedAdminButHealthIsPublic() throws Exception {
-        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
-        mockMvc.perform(get("/actuator/metrics").header("Authorization", "Bearer " + tokenFor(customer("c@example.com"))))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/actuator/metrics").header("Authorization", "Bearer " + tokenFor(save("admin@example.com", Role.ADMIN))))
-                .andExpect(status().isOk());
-    }
-
     private String login(String email) throws Exception {
         String body = mockMvc.perform(json(post("/api/v1/auth/login"), """
                         { "email": "%s", "password": "%s" }

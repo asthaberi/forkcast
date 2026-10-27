@@ -50,7 +50,7 @@ public class RedisRateLimiter implements RateLimiter {
         this.redisTemplate = redisTemplate;
         this.properties = properties;
         this.meterRegistry = meterRegistry;
-        this.breaker = new CircuitBreaker(SKIP_AFTER_FAILURE, nanoClock);
+        this.breaker = new CircuitBreaker(SKIP_AFTER_FAILURE, nanoClock).withMetrics(meterRegistry, "rate-limiter");
     }
 
     @Override

@@ -1,0 +1,10 @@
+apiVersion: 1
+
+# Loads the dashboards in monitoring/grafana/dashboards; edits made in the UI aren't saved back to the files
+providers:
+  - name: forkcast
+    folder: Forkcast
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

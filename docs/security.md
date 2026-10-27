@@ -54,7 +54,9 @@ guessing happens. Login rate limiting is a separate step.
 | `POST/PUT/DELETE /api/v1/restaurants/{id}/menu/items/**` | **that restaurant's** owner, or admin |
 | `/api/v1/cart/**`, `/api/v1/orders/**` | customer |
 | `GET /api/v1/users/me` | any signed-in user |
-| `/actuator/health`, `/actuator/info` | anyone |
+| `/livez`, `/readyz` (API port) | anyone |
+| `/actuator/health`, `/actuator/info` (management port 8081) | anyone |
+| `/actuator/prometheus` | anyone, but only on the internal management port ([details](performance.md#metrics-an-internal-management-port)) |
 | other `/actuator/**` (metrics) | admin |
 | anything else | signed-in (deny by default) |
 

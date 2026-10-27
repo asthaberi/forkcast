@@ -1,0 +1,18 @@
+# Scrapes Forkcast's internal management port. Two targets, because the app may run either way:
+#   host.docker.internal:8081  the app started on the host (./mvnw spring-boot:run or java -jar)
+#   app:8081                   the app container (docker compose --profile app)
+# Whichever isn't running simply shows as down on the Targets page.
+global:
+  scrape_interval: 5s      # short, so load tests show up in close to real time
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: forkcast
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          deployment: host
+      - targets: ['app:8081']
+        labels:
+          deployment: compose

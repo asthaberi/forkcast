@@ -1,7 +1,8 @@
 # Local infrastructure for Forkcast.
-#   docker compose up -d                       MongoDB + Redis only (run the app from your IDE / mvnw)
-#   docker compose --profile app up -d --build  everything, including the app container on :8080
-#   docker compose down                         stop
+#   docker compose up -d                              MongoDB + Redis only (run the app from your IDE / mvnw)
+#   docker compose --profile app up -d --build        also the app container on :8080
+#   docker compose --profile monitoring up -d         also Prometheus (:9090), Grafana (:3000), Jaeger (:16686)
+#   docker compose down                               stop
 services:
   # MongoDB runs as a single-node replica set because multi-document transactions
   # (used when placing an order) are only available on replica sets, not standalone servers.
@@ -50,14 +51,54 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-only-forkcast-jwt-secret-change-me-0123456789}
       # Optional: enables semantic search. Compose reads it from your shell or the git-ignored .env file
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Traces go to the Jaeger of the monitoring profile (ignored if it isn't running)
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    # Only the API port is published; the management port (8081) is reached by Prometheus inside this network
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health/readiness"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
       interval: 10s
       timeout: 3s
       retries: 12
       start_period: 20s
     # Time for graceful shutdown (closing live streams, finishing requests) before Docker kills it
     stop_grace_period: 35s
+
+  # ---- Monitoring (profile "monitoring") ----
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.5.0
+    container_name: forkcast-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # Lets Prometheus reach an app started on the host (host.docker.internal also works on Linux this way)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:12.1.1
+    container_name: forkcast-grafana
+    depends_on: [prometheus]
+    ports:
+      - "3000:3000"
+    environment:
+      # Local use only: dashboards open without a login
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/forkcast.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  jaeger:
+    profiles: [monitoring]
+    image: jaegertracing/jaeger:2.10.0
+    container_name: forkcast-jaeger
+    ports:
+      - "16686:16686"   # UI
+      - "4318:4318"     # OTLP over HTTP, where the app sends traces
 
 volumes:
   mongo-data:

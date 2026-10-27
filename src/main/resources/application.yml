@@ -46,16 +46,44 @@ springdoc:
   paths-to-match: /api/**
 
 management:
+  # Actuator runs on its own internal port: Prometheus can scrape it without an API token, and it's never
+  # exposed publicly (only port 8080 is). The API port keeps /livez and /readyz for load balancers.
+  server:
+    port: ${MANAGEMENT_PORT:8081}
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
       # /actuator/health/liveness and /readiness, for container and Kubernetes health checks
       probes:
         enabled: true
+        # ...also served as /livez and /readyz on the main port
+        add-additional-paths: true
+  tracing:
+    sampling:
+      # Share of requests traced; 1.0 traces every request (fine locally, costly at production volume)
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+  otlp:
+    metrics:
+      export:
+        # Metrics go to Prometheus (pull); the OpenTelemetry starter would also push them over OTLP
+        enabled: false
+  # Traces are exported only when management.opentelemetry.tracing.export.otlp.endpoint is set, e.g.
+  #   MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+  # for the Jaeger in docker-compose. (Not set here: an empty value fails startup instead of disabling export.)
+  metrics:
+    tags:
+      application: forkcast
+    distribution:
+      # Latency histograms, so Prometheus can compute p95/p99 across instances
+      percentiles-histogram:
+        http.server.requests: true
+        gen_ai.client.operation: true
+        mongodb.driver.commands: true
+        lettuce: true
 
 forkcast:
   # Business time zone for open/peak hours, independent of the server's zone.
