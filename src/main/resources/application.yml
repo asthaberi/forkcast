@@ -165,6 +165,7 @@ forkcast:
   cache:
     menu-ttl: 30m
     nearby-ttl: 5m
+    popular-ttl: 10m
   pricing:
     delivery-fee: 30.00
     free-delivery-threshold: 499.00

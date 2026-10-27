@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 
 import com.asthaberi.forkcast.menu.dto.MenuResponse;
+import com.asthaberi.forkcast.recommendation.Popularity;
 import com.asthaberi.forkcast.restaurant.RestaurantSnapshot;
 import com.asthaberi.forkcast.common.resilience.CircuitBreaker;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -58,13 +59,16 @@ public class CacheConfig implements CachingConfigurer {
     RedisCacheManagerBuilderCustomizer redisCacheCustomizer(JsonMapper jsonMapper, ForkcastCacheProperties properties) {
         JavaType menuType = jsonMapper.constructType(MenuResponse.class);
         JavaType nearbyType = jsonMapper.getTypeFactory().constructCollectionType(List.class, RestaurantSnapshot.class);
+        JavaType popularType = jsonMapper.getTypeFactory().constructCollectionType(List.class, Popularity.class);
 
         return builder -> builder
                 .enableStatistics()
                 .withCacheConfiguration(CacheNames.MENUS,
                         cacheConfiguration(jsonMapper, menuType, properties.menuTtl()))
                 .withCacheConfiguration(CacheNames.NEARBY_RESTAURANTS,
-                        cacheConfiguration(jsonMapper, nearbyType, properties.nearbyTtl()));
+                        cacheConfiguration(jsonMapper, nearbyType, properties.nearbyTtl()))
+                .withCacheConfiguration(CacheNames.POPULAR_DISHES,
+                        cacheConfiguration(jsonMapper, popularType, properties.popularTtl()));
     }
 
     /**

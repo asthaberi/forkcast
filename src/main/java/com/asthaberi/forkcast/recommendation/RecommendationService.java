@@ -82,22 +82,36 @@ public class RecommendationService {
 
         TasteMatch match = tasteMatch(taste, nearby.keySet());
         List<Candidate> candidates = new ArrayList<>(match.candidates());
-        popularDishes.at(nearby.keySet()).forEach(popular -> candidates.add(new Candidate(popular.menuItemId(),
-                popular.customers() == 1 ? "Ordered near you this month"
-                        : "Ordered by " + popular.customers() + " people near you this month", null)));
-
-        // One query for every dish that might be shown
-        Set<String> ids = new HashSet<>(taste.liked().keySet());
-        candidates.forEach(candidate -> ids.add(candidate.menuItemId()));
-        Map<String, MenuItem> items = menuItemRepository.findAllById(ids).stream()
-                .collect(Collectors.toMap(MenuItem::getId, Function.identity(), (a, b) -> a, HashMap::new));
+        Map<String, MenuItem> items = new HashMap<>();
+        load(items, taste.liked().keySet(), candidates);
 
         List<RecommendedDish> forYou = pick(candidates, items, taste, nearby, query.limit());
+        // Popular dishes only when personal matches don't fill the list: the popularity aggregation is the
+        // costliest query here, and for most customers with a history it isn't needed at all
+        if (forYou.size() < query.limit()) {
+            List<Candidate> popular = popularDishes.at(nearby.keySet()).stream()
+                    .map(dish -> new Candidate(dish.menuItemId(), dish.customers() == 1 ? "Ordered near you this month"
+                            : "Ordered by " + dish.customers() + " people near you this month", null))
+                    .toList();
+            candidates.addAll(popular);
+            load(items, Set.of(), popular);
+            forYou = pick(candidates, items, taste, nearby, query.limit());
+        }
         if (forYou.size() < query.limit()) {
             forYou = pick(withTopRated(candidates, items, nearby), items, taste, nearby, query.limit());
         }
         return new RecommendationsResponse(match.candidates().isEmpty() ? Strategy.POPULAR : Strategy.PERSONALIZED,
                 search.radiusKm(), taste.vegetarianOnly(), orderAgain(taste, items, nearby), explain(forYou, match));
+    }
+
+    /** Loads, in one query, the dishes among these that aren't loaded yet. */
+    private void load(Map<String, MenuItem> items, Set<String> dishIds, List<Candidate> candidates) {
+        Set<String> missing = new HashSet<>(dishIds);
+        candidates.forEach(candidate -> missing.add(candidate.menuItemId()));
+        missing.removeAll(items.keySet());
+        if (!missing.isEmpty()) {
+            menuItemRepository.findAllById(missing).forEach(item -> items.put(item.getId(), item));
+        }
     }
 
     /** Dishes nearest to the customer's taste vector, best first; none without history or an index. */

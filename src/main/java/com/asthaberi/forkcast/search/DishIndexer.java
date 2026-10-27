@@ -72,6 +72,7 @@ public class DishIndexer {
         for (int from = 0; from < documents.size(); from += BATCH_SIZE) {
             index.store().add(documents.subList(from, Math.min(from + BATCH_SIZE, documents.size())));
         }
+        index.forgetAll();
         long failures = index.indexingFailures();
         if (failures > 0) {
             // Redis accepts the writes but silently leaves such documents out of the index
@@ -91,12 +92,14 @@ public class DishIndexer {
         try {
             if (event.deleted()) {
                 index.store().delete(List.of(event.menuItemId()));
+                index.forget(event.menuItemId());
                 return;
             }
             menuItemRepository.findById(event.menuItemId())
                     .flatMap(item -> restaurantRepository.findById(item.getRestaurantId())
                             .map(restaurant -> DishDocuments.toDocument(item, restaurant)))
                     .ifPresent(document -> index.store().add(List.of(document)));
+            index.forget(event.menuItemId());
         } catch (RuntimeException e) {
             log.warn("Couldn't update search index for menu item {}: {}", event.menuItemId(), e.toString());
         }

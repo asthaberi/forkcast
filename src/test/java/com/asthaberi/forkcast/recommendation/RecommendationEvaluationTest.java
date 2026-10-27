@@ -230,7 +230,7 @@ class RecommendationEvaluationTest {
 
     private List<String> popular(Customer customer) {
         TasteProfile taste = tasteProfiles.of(customer.userId());
-        return applyRules(popularDishes.at(restaurantIds()).stream().map(PopularDishes.Popularity::menuItemId).toList(),
+        return applyRules(popularDishes.at(restaurantIds()).stream().map(Popularity::menuItemId).toList(),
                 taste);
     }
 

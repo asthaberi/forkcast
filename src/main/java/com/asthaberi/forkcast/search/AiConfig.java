@@ -19,6 +19,7 @@ import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDeta
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
+import redis.clients.jedis.ConnectionPoolConfig;
 import redis.clients.jedis.RedisClient;
 
 /**
@@ -29,6 +30,9 @@ import redis.clients.jedis.RedisClient;
 @Configuration
 @EnableAsync
 public class AiConfig {
+
+    /** Pooled Redis connections for vector search and dish-vector reads (load-tested; see docs/performance.md). */
+    static final int VECTOR_STORE_CONNECTIONS = 32;
 
     @Bean
     @ConditionalOnExpression("!'${forkcast.ai.gemini.api-key:}'.isBlank()")
@@ -85,7 +89,14 @@ public class AiConfig {
      */
     @Bean(destroyMethod = "close")
     RedisClient vectorStoreRedisClient(DataRedisConnectionDetails redis) {
-        return RedisClient.create(redis.getStandalone().getHost(), redis.getStandalone().getPort());
+        // Jedis allows only 8 pooled connections by default; recommendations make 3 vector calls per request
+        ConnectionPoolConfig pool = new ConnectionPoolConfig();
+        pool.setMaxTotal(VECTOR_STORE_CONNECTIONS);
+        pool.setMaxIdle(VECTOR_STORE_CONNECTIONS);
+        return RedisClient.builder()
+                .hostAndPort(redis.getStandalone().getHost(), redis.getStandalone().getPort())
+                .poolConfig(pool)
+                .build();
     }
 
     private static GoogleGenAiTextEmbeddingOptions options(GeminiProperties gemini, TaskType taskType) {

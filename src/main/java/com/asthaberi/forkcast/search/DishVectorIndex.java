@@ -4,6 +4,7 @@ import static org.springframework.ai.vectorstore.redis.RedisVectorStore.Metadata
 import static org.springframework.ai.vectorstore.redis.RedisVectorStore.MetadataField.tag;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.redis.RedisVectorStore;
@@ -38,6 +41,17 @@ public class DishVectorIndex {
     private final SemanticSearchProperties properties;
 
     private volatile RedisVectorStore store;
+
+    /**
+     * Dish vectors only change when a dish is re-indexed, so they're kept in memory once read. Reading them
+     * from Redis as JSON (768 floats each, ~15 per recommendation) saturated Redis' single command thread under
+     * load (docs/performance.md). Bounded in size; the indexer clears entries it rewrites, and the expiry bounds
+     * how long another instance's re-indexing can go unnoticed here.
+     */
+    private final Cache<String, float[]> vectorCache = Caffeine.newBuilder()
+            .maximumSize(10_000) // ~30 MB at 768 floats each
+            .expireAfterWrite(Duration.ofMinutes(10))
+            .build();
 
     public DishVectorIndex(ObjectProvider<EmbeddingModel> embeddingModel, RedisClient redisClient,
                            SemanticSearchProperties properties) {
@@ -89,12 +103,12 @@ public class DishVectorIndex {
     }
 
     /**
-     * The stored embeddings of these dishes, by menu item id. Reads vectors already in Redis; nothing is sent
+     * The stored embeddings of these dishes, by menu item id: from memory, or else from Redis. Nothing is sent
      * to Gemini. Dishes that aren't indexed are left out.
      */
     public Map<String, float[]> vectorsOf(Collection<String> menuItemIds) {
-        List<String> ids = List.copyOf(menuItemIds);
-        Map<String, float[]> vectors = new HashMap<>();
+        Map<String, float[]> vectors = new HashMap<>(vectorCache.getAllPresent(menuItemIds));
+        List<String> ids = menuItemIds.stream().filter(id -> !vectors.containsKey(id)).distinct().toList();
         if (ids.isEmpty()) {
             return vectors;
         }
@@ -109,9 +123,20 @@ public class DishVectorIndex {
                     vector[d] = values.getFloat(d);
                 }
                 vectors.put(ids.get(i), vector);
+                vectorCache.put(ids.get(i), vector);
             }
         }
         return vectors;
+    }
+
+    /** Called after a dish's entry in the index was rewritten or removed. */
+    void forget(String menuItemId) {
+        vectorCache.invalidate(menuItemId);
+    }
+
+    /** Called after a full re-index. */
+    void forgetAll() {
+        vectorCache.invalidateAll();
     }
 
     /**

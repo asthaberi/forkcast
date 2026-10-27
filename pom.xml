@@ -35,6 +35,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-opentelemetry</artifactId>
 		</dependency>
+		<!-- In-process cache of dish vectors (see DishVectorIndex) -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<!-- Metrics in Prometheus format at /actuator/prometheus (on the internal management port) -->
 		<dependency>
 			<groupId>io.micrometer</groupId>
