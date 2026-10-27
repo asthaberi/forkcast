@@ -33,3 +33,6 @@ build/
 
 ### Local secrets ###
 .env
+
+### Load test output (summarised in docs/performance.md) ###
+load-tests/results/

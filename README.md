@@ -14,7 +14,8 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 | Database | MongoDB 8 replica set (geospatial queries, multi-document transactions) |
 | Cache / messaging / vector store | Redis 8 (Spring Cache, pub/sub, Lua rate limiting) |
 | AI | Spring AI 2.0 + Google Gemini (embeddings, structured JSON chat output), Redis 8 vector search, embedding-based recommendations |
-| Testing | JUnit 5, Mockito, MockMvc, Testcontainers |
+| Testing | JUnit 5, Mockito, MockMvc, Testcontainers, k6 load tests |
+| Observability | Micrometer → Prometheus + Grafana, OpenTelemetry tracing → Jaeger |
 | API docs | springdoc-openapi (OpenAPI 3.1, Swagger UI) |
 | Build & delivery | Maven wrapper, multi-stage Docker image, GitHub Actions → GitHub Container Registry |
 
@@ -32,6 +33,7 @@ AI-powered food delivery backend built with Java 21 and Spring Boot 4: a ground-
 - [x] **Step 10:** Semantic dish search with Gemini embeddings + Redis vector search, evaluated against BM25 ([docs/semantic-search.md](docs/semantic-search.md))
 - [x] **Step 11:** Verified reviews with atomic ratings, and Gemini review summaries hardened against prompt injection ([docs/reviews.md](docs/reviews.md))
 - [x] **Step 12:** Personal recommendations from order history and reviews, evaluated offline on real Gemini vectors ([docs/recommendations.md](docs/recommendations.md))
+- [x] **Step 13:** Metrics, dashboards and tracing, then k6 load tests that found and fixed two bottlenecks ([docs/performance.md](docs/performance.md))
 
 ## Running locally
 
@@ -58,8 +60,11 @@ docker compose --profile app up -d --build
 **API docs:** <http://localhost:8080/swagger-ui.html>. Log in with a demo account, click **Authorize** and
 paste the token.
 
-Health check: <http://localhost:8080/actuator/health> (plus `/liveness` and `/readiness`)
-Metrics such as cache hit/miss counts: `/actuator/metrics/cache.gets` *(admin token)*
+Health checks: <http://localhost:8080/livez> and `/readyz`. Actuator runs on the internal management port 8081:
+`/actuator/health`, `/actuator/prometheus` (for Prometheus), `/actuator/metrics` *(admin token)*.
+
+Monitoring: `docker compose --profile monitoring up -d` starts Prometheus (:9090), Grafana with the Forkcast
+dashboard (:3000) and Jaeger for traces (:16686); see [docs/performance.md](docs/performance.md).
 
 On first start, 12 sample restaurants around Gwalior, 62 menu items, 63 reviews and three demo accounts (admin, the owner of
 Dosa Junction, a customer; see [docs/security.md](docs/security.md)) are seeded. `SEED_ENABLED=false` turns it off.
@@ -248,6 +253,12 @@ Business-rule violations add a machine-readable `code`, e.g. `CART_RESTAURANT_MI
   ordered Medu Vada"), with at most 2 per restaurant and a popularity fallback for new customers. An offline
   evaluation on recorded real Gemini vectors (260 simulated customers, runs in CI) gives **Recall@10 0.83 vs 0.33 for
   popularity**, and it overturned my first design ([details](docs/recommendations.md)).
+- **Observability and performance:** Actuator on an internal management port that Prometheus scrapes without
+  a token. Gemini calls, MongoDB/Redis commands and circuit breakers are metered, and requests are traced
+  through MongoDB and Gemini into Jaeger. k6 load tests: **1,500 browse requests/s at p95 14.5 ms**, **100
+  orders/s at p95 90 ms with 0 duplicates in 19,117 orders**. They also found two bottlenecks in recommendations
+  (a query growing with order volume, then Redis' single thread busy serializing vectors). Fixed, they went from
+  **~26/s to ~560/s** ([details](docs/performance.md)).
 - **Delivery:** layered, non-root Docker image (code changes ship as a <1 MB layer), Compose for the full
   stack, and CI that runs all tests, including Testcontainers, before building and publishing the image
   ([details](docs/delivery.md)).
